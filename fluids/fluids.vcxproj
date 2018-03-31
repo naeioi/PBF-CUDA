@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
+    <VCToolsVersion>14.11.25503</VCToolsVersion>
     <ProjectGuid>{1A9E3DD4-EECA-4670-9A24-AA00263E7E27}</ProjectGuid>
     <RootNamespace>fluids</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
@@ -42,12 +43,16 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)\common\cuda_inc;$(SolutionDir)\common\includes;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\common\libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir);</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings> 4819</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -60,6 +65,11 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
+      <CodeGeneration>compute_60,sm_60</CodeGeneration>
+      <GenerateLineInfo>true</GenerateLineInfo>
+      <AdditionalCompilerOptions>
+      </AdditionalCompilerOptions>
+      <AdditionalOptions>--expt-extended-lambda %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -86,7 +96,31 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="kernel.cu" />
+    <CudaCompile Include="Simulator.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="FluidSystem.h" />
+    <ClInclude Include="helper.h" />
+    <ClInclude Include="ParticleSource.h" />
+    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Shader.h" />
+    <ClInclude Include="SimpleRenderer.h" />
+    <ClInclude Include="Simulator.h" />
+    <CudaCompile Include="Simulator_kernel.cuh">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="FluidSystem.cpp" />
+    <ClCompile Include="ParticleSource.cpp" />
+    <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="shader\simple.cpp" />
+    <ClCompile Include="SimpleRenderer.cpp" />
+    <ClCompile Include="Simulator.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CudaCompile Include="Simulator.cu" />
+    <CudaCompile Include="Simulator_kernel.cuh" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="FluidSystem.cpp" />
+    <ClCompile Include="ParticleSource.cpp" />
+    <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Simulator.cpp" />
+    <ClCompile Include="shader\simple.cpp">
+      <Filter>shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Shader.cpp">
+      <Filter>shaders</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="FluidSystem.h" />
+    <ClInclude Include="helper.h" />
+    <ClInclude Include="ParticleSource.h" />
+    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Simulator.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="Shader.h">
+      <Filter>shaders</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{f576ef95-6f0f-44d7-a713-2d3743ec4d7b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
