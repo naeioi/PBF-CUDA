@@ -1,24 +1,56 @@
 #include "FixedCubeSource.h"
+#include <glad\glad.h>
+#include <GLFW\glfw3.h>
 
 int FixedCubeSource::initialize(uint pos, uint vel, uint iid, int max_nparticle) {
 	
 	m_count = 0;
-	float dx = 
+	__realloc(max_nparticle);
+	float sx = m_d.x / 2, sy = m_d.y / 2, sz = m_d.z / 2, x, y, z;
 
-	for(int i = 0; i < m_ns.x; i++)
-		for(int j = 0; j < m_ns.y; j++)
-			for (int z = 0; z < m_ns.z; z++) {
-
+	x = sx;
+	for (int i = 0; i < m_ns.x; i++, x += m_d.x) {
+		y = sy;
+		for (int j = 0; j < m_ns.y; j++, y += m_d.y) {
+			z = sz;
+			for (int z = 0; z < m_ns.z; z++, z += m_d.z, m_count++) {
+				m_pos[m_count] = make_float3(x, y, z);
+				m_vel[m_count] = make_float3(0.f, 0.f, 0.f);
+				m_iid[m_count] = m_count;
 			}
+		}
+	}
 
-	m_count = m_ns.x * m_ns.y * m_ns.z;
+	glBindBuffer(GL_ARRAY_BUFFER, pos);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(m_pos[0]), m_pos);
+	glBindBuffer(GL_ARRAY_BUFFER, vel);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(m_vel[0]), m_vel);
+	glBindBuffer(GL_ARRAY_BUFFER, iid);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, m_count * sizeof(m_iid[0]), m_iid);
+
 	return m_count;
 }
 
 int FixedCubeSource::update(uint pos, uint vel, uint iid, int max_nparticle) {
-
+	return m_count;
 }
 
 int FixedCubeSource::reset(uint pos, uint vel, uint iid, int max_nparticle) {
+	return initialize(pos, vel, iid, max_nparticle);
+}
 
+void FixedCubeSource::__realloc(int max_nparticle)
+{
+	if (m_nallocated < max_nparticle) {
+		if (m_pos) {
+			m_pos = (float3*)realloc(m_pos, max_nparticle * sizeof(m_pos[0]));
+			m_vel = (float3*)realloc(m_vel, max_nparticle * sizeof(m_vel[0]));
+			m_iid = (uint*)realloc(m_iid, max_nparticle * sizeof(m_iid[0]));
+		}
+		else {
+			m_pos = (float3*)malloc(max_nparticle * sizeof(m_pos[0]));
+			m_vel = (float3*)malloc(max_nparticle * sizeof(m_vel[0]));
+			m_iid = (uint*)malloc(max_nparticle * sizeof(m_iid[0]));
+		}
+	}
 }

@@ -1,10 +1,11 @@
 #include "FluidSystem.h"
+#include "FixedCubeSource.h"
 
 FluidSystem::FluidSystem()
 {
 	m_simulator = new Simulator();
 	m_renderer = new SimpleRenderer();
-	m_source = new ParticleSource();
+	m_source = new FixedCubeSource();
 }
 
 
