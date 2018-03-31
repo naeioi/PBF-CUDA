@@ -1,6 +1,6 @@
 #include "FixedCubeSource.h"
+// #include <GLFW\glfw3.h>
 #include <glad\glad.h>
-#include <GLFW\glfw3.h>
 
 int FixedCubeSource::initialize(uint pos, uint vel, uint iid, int max_nparticle) {
 	

@@ -39,7 +39,7 @@ private:
 	 * Then (partially) transfer to GPU memory.
 	 */
 	float3 *m_pos, *m_vel;
-	uint3 *m_iid;
+	uint *m_iid;
 	int m_nallocated;
 
 	void __realloc(int);

@@ -1,8 +1,13 @@
 #include "FluidSystem.h"
 
-/* Parameters */
-const float H = 0.1; /* unit: meters */
-
 int main() {
+	FluidSystem fluids;
 
+	fluids.initSource();
+
+	while (1) {
+		fluids.stepSource();
+		fluids.stepSimulate();
+		fluids.render();
+	}
 }

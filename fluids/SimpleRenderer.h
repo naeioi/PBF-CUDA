@@ -3,6 +3,8 @@
 #include "Camera.h"
 #include "Shader.h"
 
+#include <GLFW\glfw3.h>
+
 class SimpleRenderer :
 	public Renderer
 {
@@ -29,6 +31,6 @@ private:
 
 	Shader *m_shader;
 
-	GLFWwindow* m_window;
+	GLFWwindow *m_window;
 };
 

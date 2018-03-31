@@ -1,4 +1,3 @@
-#include "shader/simple.cpp"
 #include "SimpleRenderer.h"
 
 #include <cstdlib>

@@ -3,7 +3,7 @@
 #include <helper_cuda.h>
 
 #include <glad\glad.h>
-#include <GLFW\glfw3.h>
+// #include <GLFW\glfw3.h>
 #include <cuda_gl_interop.h>
 
 void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_iid, uint d_niid, int nparticle) 

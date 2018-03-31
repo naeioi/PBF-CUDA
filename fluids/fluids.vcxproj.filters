@@ -16,6 +16,11 @@
     <ClCompile Include="Shader.cpp">
       <Filter>shaders</Filter>
     </ClCompile>
+    <ClCompile Include="SimpleRenderer.cpp" />
+    <ClCompile Include="FixedCubeSource.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="helper.cpp" />
+    <ClCompile Include="..\common\src\glad.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FluidSystem.h" />
@@ -28,6 +33,8 @@
     <ClInclude Include="Shader.h">
       <Filter>shaders</Filter>
     </ClInclude>
+    <ClInclude Include="SimpleRenderer.h" />
+    <ClInclude Include="FixedCubeSource.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shaders">

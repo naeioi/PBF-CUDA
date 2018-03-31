@@ -1,8 +1,9 @@
 #pragma once
-#include <GLFW\glfw3.h>
 #include "Simulator.h"
 #include "SimpleRenderer.h"
 #include "ParticleSource.h"
+
+#include <GLFW\glfw3.h>
 
 class FluidSystem
 {
@@ -11,6 +12,8 @@ public:
 	FluidSystem();
 	~FluidSystem();
 
+	void initSource();
+	void stepSource();
 	void stepSimulate();
 	void render();
 
@@ -34,8 +37,12 @@ private:
 	/* position: float3 GLBuffer */
 	GLuint d_pos, d_npos;
 	/* velocity: float3 GLBuffer */
-	GLuint d_vec, d_nvec;
+	GLuint d_vel, d_nvel;
 	/* initial id: uint GLBuffer */
 	GLuint d_iid, d_niid;
+
+	/* tic: d_pos, toc: d_npos for rendering */
+	bool m_tictoc;
+	int  m_nparticle;
 };
 
