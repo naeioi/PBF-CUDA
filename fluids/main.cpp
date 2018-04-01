@@ -6,8 +6,8 @@ int main() {
 	fluids.initSource();
 
 	while (1) {
-		fluids.stepSource();
-		fluids.stepSimulate();
+		// fluids.stepSource();
+		// fluids.stepSimulate();
 		fluids.render();
 	}
 }

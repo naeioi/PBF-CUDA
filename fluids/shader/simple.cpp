@@ -1,32 +1,27 @@
 #define STRINGIFY(s) #s
 
-const char* vshader = STRINGIFY(
+/* Stringify does not support # and newline, so hack outside out it */
+const char* vshader = "# version 330 core\n" STRINGIFY(
 
-	# version 330 core
+	layout (location = 0) in vec3 aPos;
 
-	layout(location = 0) in vec3 aPos;
-
-	uniform mat4 proj;
-	uniform mat4 view;
-	uniform mat4 obj;
+	uniform mat4 proj; 
+	uniform mat4 view; 
 
 //	out vec4 FragPos;	
 
 	void main() {
-		mat4 view_obj = view * obj;
-		vec4 FragPos = view_obj * vec4(aPos, 1.0);
+		vec4 FragPos = view * vec4(aPos, 1.0);
 		gl_Position = proj * FragPos;
 	}
 );
 
-const char* fshader = STRINGIFY(
-
-# version 330 core
+const char* fshader = "# version 330 core\n" STRINGIFY(
 
 out vec4 FragColor;
 
 void main() {
-	FragColor = float3(1., 1., 1., 1);
+	FragColor = vec4(1., 1., 1., 1.);
 }
 
 );

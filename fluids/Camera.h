@@ -7,7 +7,7 @@ class Camera
 public:
 	Camera();
 	/* Specify only camera position and looks at origin */
-	Camera(const glm::vec3 &pos);
+	Camera(const glm::vec3 &pos, float aspect);
 	Camera(const glm::vec3 &pos, const glm::vec3 front, const glm::vec3 up, float fov, float aspect);
 	~Camera();
 

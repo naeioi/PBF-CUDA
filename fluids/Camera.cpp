@@ -7,6 +7,11 @@ Camera::Camera()
 {
 }
 
+Camera::Camera(const glm::vec3 & pos, float aspect)
+{
+	*this = Camera(pos, -pos, glm::vec3(0.f, 0.f, 1.f), 60.f, aspect);
+}
+
 Camera::Camera(const glm::vec3 & pos, const glm::vec3 front, const glm::vec3 up, float fov, float aspect)
 	: pos(pos)
 	, moveFront(glm::normalize(front))

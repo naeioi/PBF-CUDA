@@ -6,14 +6,14 @@ int FixedCubeSource::initialize(uint pos, uint vel, uint iid, int max_nparticle)
 	
 	m_count = 0;
 	__realloc(max_nparticle);
-	float sx = m_d.x / 2, sy = m_d.y / 2, sz = m_d.z / 2, x, y, z;
+	float sx = m_llim.x + m_d.x / 2, sy = m_llim.y + m_d.y / 2, sz = m_llim.z + m_d.z / 2, x, y, z;
 
 	x = sx;
 	for (int i = 0; i < m_ns.x; i++, x += m_d.x) {
 		y = sy;
 		for (int j = 0; j < m_ns.y; j++, y += m_d.y) {
 			z = sz;
-			for (int z = 0; z < m_ns.z; z++, z += m_d.z, m_count++) {
+			for (int k = 0; k < m_ns.z; k++, z += m_d.z, m_count++) {
 				m_pos[m_count] = make_float3(x, y, z);
 				m_vel[m_count] = make_float3(0.f, 0.f, 0.f);
 				m_iid[m_count] = m_count;

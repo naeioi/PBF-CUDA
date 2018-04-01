@@ -30,12 +30,24 @@ FluidSystem::FluidSystem()
 	glGenBuffers(1, &d_iid);
 	glGenBuffers(1, &d_niid);
 
-	glBufferData(d_pos,  MAX_PARTICLE_NUM * sizeof(float3), NULL, GL_DYNAMIC_DRAW);
-	glBufferData(d_npos, MAX_PARTICLE_NUM * sizeof(float3), NULL, GL_DYNAMIC_DRAW);
-	glBufferData(d_vel,  MAX_PARTICLE_NUM * sizeof(float3), NULL, GL_DYNAMIC_DRAW);
-	glBufferData(d_nvel, MAX_PARTICLE_NUM * sizeof(float3), NULL, GL_DYNAMIC_DRAW);
-	glBufferData(d_iid,  MAX_PARTICLE_NUM * sizeof(uint),   NULL, GL_DYNAMIC_DRAW);
-	glBufferData(d_niid, MAX_PARTICLE_NUM * sizeof(uint),   NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, d_pos);
+	glBufferData(GL_ARRAY_BUFFER,  MAX_PARTICLE_NUM * sizeof(float3), NULL, GL_DYNAMIC_DRAW);
+	checkGLErr();
+	glBindBuffer(GL_ARRAY_BUFFER, d_npos);
+	glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLE_NUM * sizeof(float3), NULL, GL_DYNAMIC_DRAW);
+	checkGLErr();
+	glBindBuffer(GL_ARRAY_BUFFER, d_vel);
+	glBufferData(GL_ARRAY_BUFFER,  MAX_PARTICLE_NUM * sizeof(float3), NULL, GL_DYNAMIC_DRAW);
+	checkGLErr();
+	glBindBuffer(GL_ARRAY_BUFFER, d_nvel);
+	glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLE_NUM * sizeof(float3), NULL, GL_DYNAMIC_DRAW);
+	checkGLErr();
+	glBindBuffer(GL_ARRAY_BUFFER, d_iid);
+	glBufferData(GL_ARRAY_BUFFER,  MAX_PARTICLE_NUM * sizeof(uint),   NULL, GL_DYNAMIC_DRAW);
+	checkGLErr();
+	glBindBuffer(GL_ARRAY_BUFFER, d_niid);
+	glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLE_NUM * sizeof(uint),   NULL, GL_DYNAMIC_DRAW);
+	checkGLErr();
 }
 
 void FluidSystem::initSource() 

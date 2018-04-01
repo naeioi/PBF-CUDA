@@ -11,3 +11,5 @@ __host__ __device__
 inline int ceilDiv(int a, int b) { return (int)((a + b - 1) / b); }
 
 void fexit(const int code = -1, const char* msg = nullptr);
+
+void checkGLErr();

@@ -2,17 +2,22 @@
 
 #include <cstdlib>
 #include <GLFW\glfw3.h>
+#include <glm/common.hpp>
 
 SimpleRenderer::SimpleRenderer()
 {
-	/* Resource allocation in constructor */
+	/* State initialization in init() */
+	init();
 
-	m_camera = new Camera();
+	/* Resource allocation in constructor */
+	glm::vec3 pos(1.f, -1.f, 1.f);
+	float aspect = (float) WINDOW_WIDTH / WINDOW_HEIGHT;
+
+	m_camera = new Camera(pos, aspect);
 	/* This will loaded shader from shader/simple.cpp automatically */
 	m_shader = new Shader();
 
-	/* State initialization in init() */
-	init();
+	glGenVertexArrays(1, &d_vao);
 }
 
 void SimpleRenderer::init() {
@@ -35,12 +40,13 @@ void SimpleRenderer::init() {
 	}
 
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+	glEnable(GL_DEPTH_TEST);
 
 	__binding();
 }
 
 void SimpleRenderer::__binding() {
-	/* currently none */
+	glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
 void SimpleRenderer::__render() {
@@ -54,9 +60,9 @@ void SimpleRenderer::__render() {
 		m_camera->use(Shader::now());
 
 		/* draw */
-		glDrawArrays(GL_POINTS, d_pos, m_nparticle);
+		glDrawArrays(GL_POINTS, 0, m_nparticle);
 	}
-	
+
 	/* == draw bounding box == */
 	/* TODO */
 }
@@ -74,5 +80,21 @@ void SimpleRenderer::render(uint pos, int nparticle) {
 	d_pos = pos;
 	m_nparticle = nparticle;
 
-	__render();
+	glBindVertexArray(d_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, d_pos);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	if (!glfwWindowShouldClose(m_window)) {
+		// processInput(m_window);
+		__render();
+		glfwSwapBuffers(m_window);
+		// ctx.syncService.newFrame();
+		/*if (ctx.lockFPS > 0) {
+			float sleepTime = 1000.f * (1.f / ctx.lockFPS - ctx.syncService.frameTime());
+			if (sleepTime < 0) sleepTime = 0;
+			Sleep(sleepTime);
+		}*/
+		glfwPollEvents();
+	}
 }

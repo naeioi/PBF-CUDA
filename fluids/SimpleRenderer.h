@@ -21,6 +21,8 @@ private:
 	void __render();
 
 	int m_nparticle;
+	/* Nsight debugging cannot work without a vao */
+	uint d_vao;
 	/* particle position vbo */
 	uint d_pos;
 	/* bounding box */
