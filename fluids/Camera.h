@@ -19,10 +19,19 @@ public:
 	void setYaw(float degree);
 	void setPitch(float degree);
 	void setAspect(float aspect);
+	void setPos(const glm::vec3 &pos);
+	void setFront(const glm::vec3 &front);
+	void setUp(const glm::vec3 &up);
 	void zoomIn(float scale);
 	void zoom(float scale);
 
 	const glm::vec3& getPos() const;
+	const glm::vec3& getUp() const;
+	/* Convection: len(front) == len(lookat center - pos) 
+	 * or simply let front = lookat - pos
+	 * This convection makes camera rotation work properly.
+	 */
+	const glm::vec3& getFront() const;
 
 	void setSyncMoveAndLook(bool sync);
 	bool toggleSyncMoveAndLook();

@@ -1,8 +1,10 @@
 #include "SimpleRenderer.h"
+#include "Input.h"
 
 #include <cstdlib>
 #include <GLFW\glfw3.h>
 #include <glm/common.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 
 void SimpleRenderer::init() {
 
@@ -14,6 +16,7 @@ void SimpleRenderer::init() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+	m_input = new Input();
 	m_window = glfwCreateWindow(m_width, m_height, "Fluid", nullptr, nullptr);
 	if (m_window == nullptr) {
 		printf("Failed to create GLFW window\n");
@@ -51,20 +54,118 @@ void SimpleRenderer::init() {
 	glEnableVertexAttribArray(0);
 }
 
-void SimpleRenderer::__framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+void SimpleRenderer::__window_size_callback(GLFWwindow* window, int width, int height) {
 	m_width = width;
 	m_height = height;
 	glViewport(0, 0, width, height);
 	m_camera->setAspect((float)width / height);
 }
 
+void SimpleRenderer::__mouse_button_callback(GLFWwindow *w, int button, int action, int mods) {
+	Input::Pressed updown = action == GLFW_PRESS ? Input::DOWN : Input::UP;
+	if (button == GLFW_MOUSE_BUTTON_LEFT)
+		m_input->left_mouse = updown;
+	if (button == GLFW_MOUSE_BUTTON_RIGHT)
+		m_input->right_mouse = updown;
+	if (button == GLFW_MOUSE_BUTTON_MIDDLE)
+		m_input->mid_mouse = updown;
+}
+
+void SimpleRenderer::__mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
+	m_input->updateMousePos(glm::vec2(xpos, ypos));
+
+	/* -- Camera control -- */
+
+	/* Rotating */
+	if (m_input->left_mouse == Input::DOWN) {
+		glm::vec2 scr_d = m_input->getMouseDiff();
+		glm::vec3 pos = m_camera->getPos(), front = m_camera->getFront(), center = pos + front, up = m_camera->getUp();
+		glm::vec3 axis;
+		/* For horizontal panning, rotate camera within plane perpendicular to `up' direction */
+		if (scr_d.x != 0) {
+			axis = glm::normalize(m_camera->getUp());
+			/* for now, manually update pos, front and up in renderer */
+			front = glm::rotate(front, scr_d.x * Input::SCREEN_ROTATE_RATE, axis);
+			pos = center - front;
+
+			m_camera->setPos(pos);
+			m_camera->setFront(front);
+		}
+		/* For verticle panning, rotate camera within plane perpendicular to cross(up, front) direction */
+		if (scr_d.y != 0) {
+			axis = glm::normalize(glm::cross(m_camera->getUp(), front));
+
+			front = glm::rotate(front, scr_d.y * Input::SCREEN_ROTATE_RATE, axis);
+			up = glm::rotate(up, scr_d.y * Input::SCREEN_ROTATE_RATE, axis);
+			pos = center - front;
+
+			m_camera->setPos(pos);
+			m_camera->setUp(up);
+			m_camera->setFront(front);
+		}
+	}
+
+	/* Panning */
+	if (m_input->right_mouse == Input::DOWN) {
+		glm::vec3 pos = m_camera->getPos(), front = m_camera->getFront(), up = m_camera->getUp();
+		glm::vec3 dx, dy;
+		glm::vec2 scr_d = m_input->getMouseDiff();
+
+		dx = glm::normalize(glm::cross(front, up));
+		dy = glm::normalize(up);
+
+		pos += scr_d.x * dx + scr_d.y * dy;
+		m_camera->setPos(pos);
+	}
+}
+
+void SimpleRenderer::__mouse_scroll_callback(GLFWwindow *w, float dx, float dy) {
+	const float min_d = 0.1f, max_d = 10.f;
+	glm::vec3 d = m_camera->getFront(), pos = m_camera->getPos();
+	if (dy > 0) {
+		if (d.length() < min_d) return;
+		pos += d * Input::SCREEN_SCROLL_RATE;
+		m_camera->setPos(pos);
+	}
+	else {
+		if (d.length() > max_d) return;
+		pos -= d * Input::SCREEN_SCROLL_RATE;
+		m_camera->setPos(pos);
+	}
+}
+
 void SimpleRenderer::__binding() {
 	// glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+	/* glfw input callback requires static function (not class method) 
+	 * as a workaround, glfw provides a 'user pointer', 
+	 * by which static function gets access to class method
+	 */
 	glfwSetWindowUserPointer(m_window, this);
+
+	/* Windows resize */
 	glfwSetWindowSizeCallback(m_window, [](GLFWwindow *win, int width, int height) {
-		((SimpleRenderer*)(glfwGetWindowUserPointer(win)))->__framebuffer_size_callback(win, width, height);
+		((SimpleRenderer*)(glfwGetWindowUserPointer(win)))->__window_size_callback(win, width, height);
 	});
+
+	/* Mouse move */
+	glfwSetCursorPosCallback(m_window, [](GLFWwindow *w, double xpos, double ypos) {
+		((SimpleRenderer*)(glfwGetWindowUserPointer(w)))->__mouse_move_callback(w, xpos, ypos);
+	});
+
+	/* Mouse Button */
+	glfwSetMouseButtonCallback(m_window, [](GLFWwindow* w, int button, int action, int mods) {
+		((SimpleRenderer*)(glfwGetWindowUserPointer(w)))->__mouse_button_callback(w, button, action, mods);
+	});
+
+	/* Mouse Scroll */
+	glfwSetScrollCallback(m_window, [](GLFWwindow *w, double dx, double dy) {
+		((SimpleRenderer*)(glfwGetWindowUserPointer(w)))->__mouse_scroll_callback(w, dx, dy);
+	});
+}
+
+void SimpleRenderer::__processInput() {
+
 }
 
 void SimpleRenderer::__render() {
@@ -90,6 +191,8 @@ SimpleRenderer::~SimpleRenderer()
 {
 	if (m_camera) delete m_camera;
 	if (m_shader) delete m_shader;
+	/* TODO: m_window, input */
+	if (m_input) delete m_input;
 }
 
 void SimpleRenderer::render(uint pos, int nparticle) {
@@ -128,7 +231,7 @@ void SimpleRenderer::render(uint pos, int nparticle) {
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(lines), lines);
 
 	if (!glfwWindowShouldClose(m_window)) {
-		// processInput(m_window);
+		__processInput();
 		__render();
 		glfwSwapBuffers(m_window);
 		// ctx.syncService.newFrame();

@@ -103,9 +103,9 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="FixedCubeSource.h" />
     <ClInclude Include="FluidSystem.h" />
     <ClInclude Include="helper.h" />
+    <ClInclude Include="Input.h" />
     <ClInclude Include="ParticleSource.h" />
     <ClInclude Include="Renderer.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="SimpleRenderer.h" />
     <ClInclude Include="Simulator.h" />
@@ -119,6 +119,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="FixedCubeSource.cpp" />
     <ClCompile Include="FluidSystem.cpp" />
     <ClCompile Include="helper.cpp" />
+    <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ParticleSource.cpp" />
     <ClCompile Include="Renderer.cpp" />

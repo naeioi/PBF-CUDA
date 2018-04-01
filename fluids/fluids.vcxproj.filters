@@ -21,6 +21,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="helper.cpp" />
     <ClCompile Include="..\common\src\glad.c" />
+    <ClCompile Include="Input.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FluidSystem.h" />
@@ -28,13 +29,13 @@
     <ClInclude Include="ParticleSource.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Simulator.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Shader.h">
       <Filter>shaders</Filter>
     </ClInclude>
     <ClInclude Include="SimpleRenderer.h" />
     <ClInclude Include="FixedCubeSource.h" />
+    <ClInclude Include="Input.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shaders">

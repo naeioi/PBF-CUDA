@@ -74,6 +74,10 @@ void Camera::setPitch(float degree)
 	updateLookFront();
 }
 
+void Camera::setUp(const glm::vec3 &up_) { up = up_; }
+void Camera::setPos(const glm::vec3 &pos_) { pos = pos_; }
+void Camera::setFront(const glm::vec3 &front_) { lookFront = front_; }
+
 void Camera::setAspect(float aspect_)
 {
 	aspect = aspect_; 
@@ -122,4 +126,12 @@ void Camera::updateLookFront() {
 
 const glm::vec3& Camera::getPos() const {
 	return pos;
+}
+
+const glm::vec3& Camera::getUp() const {
+	return up;
+}
+
+const glm::vec3& Camera::getFront() const {
+	return lookFront;
 }
