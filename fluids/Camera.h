@@ -18,6 +18,7 @@ public:
 	void incrPitch(float degree);
 	void setYaw(float degree);
 	void setPitch(float degree);
+	void setAspect(float aspect);
 	void zoomIn(float scale);
 	void zoom(float scale);
 

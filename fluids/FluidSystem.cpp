@@ -16,7 +16,7 @@ FluidSystem::FluidSystem()
 	const int niter = 2;
 
 	m_simulator = new Simulator(g, h, dt, pho0, lambda_eps, niter, ulim, llim);
-	m_renderer = new SimpleRenderer();
+	m_renderer = new SimpleRenderer(ulim, llim);
 	m_source = new FixedCubeSource(
 		/* limits */  make_float3(-.5f, .5f, 1.f), make_float3(-.5f+.25f, .5f-.25f, 1.f-.25f), 
 		/* numbers */ make_int3(30, 30, 30));

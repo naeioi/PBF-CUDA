@@ -9,7 +9,7 @@ class SimpleRenderer :
 	public Renderer
 {
 public:
-	SimpleRenderer();
+	SimpleRenderer(float3 ulim, float3 llim) : m_ulim(ulim), m_llim(llim) { init();  };
 	~SimpleRenderer();
 
 	void render(uint pos, int m_nparticle);
@@ -20,9 +20,13 @@ private:
 	void loop();
 	void __render();
 
+	/* event callback */
+	void __framebuffer_size_callback(GLFWwindow* window, int width, int height);
+
+	int m_width, m_height;
 	int m_nparticle;
 	/* Nsight debugging cannot work without a vao */
-	uint d_vao;
+	uint d_vao, d_bbox_vao, d_bbox_vbo;
 	/* particle position vbo */
 	uint d_pos;
 	/* bounding box */

@@ -74,6 +74,11 @@ void Camera::setPitch(float degree)
 	updateLookFront();
 }
 
+void Camera::setAspect(float aspect_)
+{
+	aspect = aspect_; 
+}
+
 void Camera::zoomIn(float scale)
 {
 	float nfov = (float) glm::degrees(2 * atan(tan(glm::radians(fov) * 0.5) / scale));
