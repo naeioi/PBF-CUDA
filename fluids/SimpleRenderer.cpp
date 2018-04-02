@@ -77,26 +77,41 @@ void SimpleRenderer::__mouse_move_callback(GLFWwindow* window, double xpos, doub
 	/* -- Camera control -- */
 
 	/* Rotating */
+	glm::vec2 scr_d = m_input->getMouseDiff();
+	glm::vec3 pos = m_camera->getPos(), front = m_camera->getFront(), center = pos + front, up = m_camera->getUp();
+	glm::vec3 cam_d = scr_d.x * -glm::normalize(glm::cross(front, up)) + scr_d.y * glm::normalize(up);
+
 	if (m_input->left_mouse == Input::DOWN) {
-		glm::vec2 scr_d = m_input->getMouseDiff();
-		glm::vec3 pos = m_camera->getPos(), front = m_camera->getFront(), center = pos + front, up = m_camera->getUp();
-		glm::vec3 axis;
+		glm::vec3 axis = glm::cross(cam_d, front);
+
+		/*front = glm::rotate(front, glm::length(scr_d) * Input::SCREEN_ROTATE_RATE, axis);
+		up = glm::rotate(up, glm::length(scr_d) * Input::SCREEN_ROTATE_RATE, axis);
+		pos = center - front;
+
+		m_camera->setFront(front);
+		m_camera->setUp(up);
+		m_camera->setPos(pos);*/
+
 		/* For horizontal panning, rotate camera within plane perpendicular to `up' direction */
 		if (scr_d.x != 0) {
-			axis = glm::normalize(m_camera->getUp());
+			axis = m_camera->aup;
 			/* for now, manually update pos, front and up in renderer */
-			front = glm::rotate(front, scr_d.x * Input::SCREEN_ROTATE_RATE, axis);
+			front = glm::rotate(front, -scr_d.x * Input::SCREEN_ROTATE_RATE, axis);
+			up = glm::rotate(up, -scr_d.x * Input::SCREEN_ROTATE_RATE, axis);
 			pos = center - front;
+
+			m_camera->ax = glm::rotate(m_camera->ax, -scr_d.x * Input::SCREEN_ROTATE_RATE, axis);
 
 			m_camera->setPos(pos);
 			m_camera->setFront(front);
+			m_camera->setUp(up);
 		}
 		/* For verticle panning, rotate camera within plane perpendicular to cross(up, front) direction */
 		if (scr_d.y != 0) {
-			axis = glm::normalize(glm::cross(m_camera->getUp(), front));
+			axis = m_camera->ax;
 
-			front = glm::rotate(front, scr_d.y * Input::SCREEN_ROTATE_RATE, axis);
-			up = glm::rotate(up, scr_d.y * Input::SCREEN_ROTATE_RATE, axis);
+			front = glm::rotate(front, -scr_d.y * Input::SCREEN_ROTATE_RATE, axis);
+			up = glm::rotate(up, -scr_d.y * Input::SCREEN_ROTATE_RATE, axis);
 			pos = center - front;
 
 			m_camera->setPos(pos);
@@ -107,14 +122,7 @@ void SimpleRenderer::__mouse_move_callback(GLFWwindow* window, double xpos, doub
 
 	/* Panning */
 	if (m_input->right_mouse == Input::DOWN) {
-		glm::vec3 pos = m_camera->getPos(), front = m_camera->getFront(), up = m_camera->getUp();
-		glm::vec3 dx, dy;
-		glm::vec2 scr_d = m_input->getMouseDiff();
-
-		dx = glm::normalize(glm::cross(front, up));
-		dy = glm::normalize(up);
-
-		pos += scr_d.x * dx + scr_d.y * dy;
+		pos += Input::SCREEN_PAN_RATE * cam_d * glm::length(m_camera->getFront());
 		m_camera->setPos(pos);
 	}
 }
@@ -125,12 +133,16 @@ void SimpleRenderer::__mouse_scroll_callback(GLFWwindow *w, float dx, float dy) 
 	if (dy > 0) {
 		if (d.length() < min_d) return;
 		pos += d * Input::SCREEN_SCROLL_RATE;
+		d -= d * Input::SCREEN_SCROLL_RATE;
 		m_camera->setPos(pos);
+		m_camera->setFront(d);
 	}
 	else {
 		if (d.length() > max_d) return;
 		pos -= d * Input::SCREEN_SCROLL_RATE;
+		d += d * Input::SCREEN_SCROLL_RATE;
 		m_camera->setPos(pos);
+		m_camera->setFront(d);
 	}
 }
 
@@ -181,8 +193,12 @@ void SimpleRenderer::__render() {
 		/* draw particles */
 		glBindVertexArray(d_vao);
 		glDrawArrays(GL_POINTS, 0, m_nparticle);
+
+		/* draw bounding box */
 		glBindVertexArray(d_bbox_vao);
 		glDrawArrays(GL_LINES, 0, 12 * 2);
+
+		/* TODO: draw floor */
 	}
 
 }

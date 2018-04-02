@@ -2,7 +2,7 @@
 #include <GLFW\glfw3.h>
 
 const float Input::SCREEN_ROTATE_RATE = 0.005f;
-const float Input::SCREEN_PAN_RATE = 0.005f;
+const float Input::SCREEN_PAN_RATE = 0.002f;
 const float Input::SCREEN_SCROLL_RATE = 0.1f;
 
 Input::Input() {

@@ -36,6 +36,8 @@ public:
 	void setSyncMoveAndLook(bool sync);
 	bool toggleSyncMoveAndLook();
 
+	glm::vec3 aup, ax;
+
 private:
 	glm::vec3 pos;
 	glm::vec3 moveFront; 

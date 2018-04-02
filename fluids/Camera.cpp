@@ -9,19 +9,23 @@ Camera::Camera()
 
 Camera::Camera(const glm::vec3 & pos, float aspect)
 {
-	*this = Camera(pos, -pos, glm::vec3(0.f, 0.f, 1.f), 60.f, aspect);
+	glm::vec3 front(glm::vec3(0.f, 0.f, 0.5f) - pos), up = glm::vec3(0.f, 0.f, 1.f);
+	up = glm::cross(front, glm::cross(up, front));
+	*this = Camera(pos, front, up, 60.f, aspect);
 }
 
 Camera::Camera(const glm::vec3 & pos, const glm::vec3 front, const glm::vec3 up, float fov, float aspect)
 	: pos(pos)
 	, moveFront(glm::normalize(front))
-	, lookFront(glm::normalize(front))
+	, lookFront(front)
 	, up(glm::normalize(up))
 	, ofov(fov), fov(fov)
 	, aspect(aspect)
 	, yaw(0.f), pitch(0.f)
 	, isSyncMoveAndLook(false)
 {
+	aup = glm::vec3(0.f, 0.f, 1.f);
+	ax = glm::normalize(glm::cross(lookFront, aup));
 }
 
 
