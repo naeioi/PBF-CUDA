@@ -1,7 +1,9 @@
 #include "Camera.h"
+#include "Input.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/common.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 
 Camera::Camera()
 {
@@ -16,16 +18,13 @@ Camera::Camera(const glm::vec3 & pos, float aspect)
 
 Camera::Camera(const glm::vec3 & pos, const glm::vec3 front, const glm::vec3 up, float fov, float aspect)
 	: pos(pos)
-	, moveFront(glm::normalize(front))
-	, lookFront(front)
+	, front(front)
 	, up(glm::normalize(up))
 	, ofov(fov), fov(fov)
 	, aspect(aspect)
-	, yaw(0.f), pitch(0.f)
-	, isSyncMoveAndLook(false)
 {
-	aup = glm::vec3(0.f, 0.f, 1.f);
-	ax = glm::normalize(glm::cross(lookFront, aup));
+	rotx = glm::vec3(0.f, 0.f, 1.f);
+	roty = glm::normalize(glm::cross(front, rotx));
 }
 
 
@@ -35,107 +34,61 @@ Camera::~Camera()
 
 void Camera::use(const Shader & shader) const
 {
-	glm::mat4 view = glm::lookAt(pos, pos + lookFront, up);
+	glm::mat4 view = glm::lookAt(pos, pos + front, up);
 	glm::mat4 pers = glm::perspective(glm::radians(fov), aspect, 0.1f, 100.f);
 	shader.setUnif("view", view);
 	shader.setUnif("proj", pers);
 }
 
-void Camera::move(const glm::vec3 & step)
-{
-	glm::vec3 right = glm::cross(moveFront, up);
-	pos += step.x * right + step.y * up + step.z * moveFront;
-}
-
-void Camera::absMove(const glm::vec3 & step)
-{
-	pos += step;
-}
-
-void Camera::incrYaw(float degree)
-{
-	setYaw(yaw + degree);
-}
-
-void Camera::incrPitch(float degree)
-{
-	setPitch(pitch + degree);
-}
-
-void Camera::setYaw(float degree)
-{
-	yaw = degree;
-	if (yaw > 89.f) yaw = 89.f;
-	if (yaw < -89.f) yaw = -89.f;
-	updateLookFront();
-}
-
-void Camera::setPitch(float degree)
-{
-	pitch = degree;
-	if (pitch > 89.f) pitch = 89.f;
-	if (pitch < -89.f) pitch = -89.f;
-	updateLookFront();
-}
-
 void Camera::setUp(const glm::vec3 &up_) { up = up_; }
 void Camera::setPos(const glm::vec3 &pos_) { pos = pos_; }
-void Camera::setFront(const glm::vec3 &front_) { lookFront = front_; }
+void Camera::setFront(const glm::vec3 &front_) { front = front_; }
 
 void Camera::setAspect(float aspect_)
 {
 	aspect = aspect_; 
 }
 
-void Camera::zoomIn(float scale)
-{
-	float nfov = (float) glm::degrees(2 * atan(tan(glm::radians(fov) * 0.5) / scale));
-	if (nfov < 1.f) nfov = 1.f;
-	if (nfov > 45.f) nfov = 45.f;
-	fov = nfov;
-}
+void Camera::rotate(const glm::vec2 dxy) {
 
-void Camera::zoom(float scale)
-{
-	float nfov = (float) glm::degrees(2 * atan(tan(glm::radians(ofov) * 0.5) / scale));
-	if (nfov < 1.f) nfov = 1.f;
-	if (nfov > 45.f) nfov = 45.f;
-	fov = nfov;
-}
+	glm::vec3 center = pos + front;
+	/* For horizontal panning, rotate camera within plane perpendicular to `up' direction */
+	if (dxy.x != 0) {
+		const glm::vec3 &axis = rotx;
+		/* for now, manually update pos, front and up in renderer */
+		front = glm::rotate(front, -dxy.x * Input::SCREEN_ROTATE_RATE, axis);
+		up = glm::rotate(up, -dxy.x * Input::SCREEN_ROTATE_RATE, axis);
+		pos = center - front;
 
-bool Camera::toggleSyncMoveAndLook() {
-	return isSyncMoveAndLook = !isSyncMoveAndLook;
-}
-
-void Camera::setSyncMoveAndLook(bool sync)
-{
-	isSyncMoveAndLook = sync;
-}
-
-void Camera::updateLookFront() {
-	float rpitch = glm::radians(pitch), ryaw = glm::radians(yaw);
-	glm::vec3 right = glm::cross(moveFront, up);
-	glm::vec3 local = glm::vec3(
-		cos(rpitch) * sin(ryaw),
-		sin(rpitch),
-		cos(rpitch) * cos(ryaw)
-	);
-	lookFront = local.x * right + local.y * up + local.z * moveFront;
-
-	if (isSyncMoveAndLook) {
-		moveFront = lookFront;
-		yaw = pitch = 0;
+		roty = glm::rotate(roty, -dxy.x * Input::SCREEN_ROTATE_RATE, axis);
 	}
+	/* For verticle panning, rotate camera within plane perpendicular to cross(up, front) direction */
+	if (dxy.y != 0) {
+		const glm::vec3 &axis = roty;
+
+		front = glm::rotate(front, -dxy.y * Input::SCREEN_ROTATE_RATE, axis);
+		up = glm::rotate(up, -dxy.y * Input::SCREEN_ROTATE_RATE, axis);
+		pos = center - front;
+	}
+
 }
 
-const glm::vec3& Camera::getPos() const {
-	return pos;
+void Camera::pan(const glm::vec2 dxy) {
+	glm::vec3 cam_d = dxy.x * -glm::normalize(glm::cross(front, up)) + dxy.y * glm::normalize(up);
+	pos += Input::SCREEN_PAN_RATE * cam_d * glm::length(front);
 }
 
-const glm::vec3& Camera::getUp() const {
-	return up;
-}
-
-const glm::vec3& Camera::getFront() const {
-	return lookFront;
+void Camera::zoom(float dy)
+{
+	const float min_d = 0.1f, max_d = 10.f;
+	if (dy > 0) {
+		if (front.length() < min_d) return;
+		pos += front * Input::SCREEN_SCROLL_RATE;
+		front -= front * Input::SCREEN_SCROLL_RATE;
+	}
+	else {
+		if (front.length() > max_d) return;
+		pos -= front * Input::SCREEN_SCROLL_RATE;
+		front += front * Input::SCREEN_SCROLL_RATE;
+	}
 }

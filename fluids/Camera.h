@@ -12,48 +12,33 @@ public:
 	~Camera();
 
 	void use(const Shader &shader) const;
-	void move(const glm::vec3 &step);
-	void absMove(const glm::vec3 &step);
-	void incrYaw(float degree);
-	void incrPitch(float degree);
-	void setYaw(float degree);
-	void setPitch(float degree);
 	void setAspect(float aspect);
 	void setPos(const glm::vec3 &pos);
 	void setFront(const glm::vec3 &front);
 	void setUp(const glm::vec3 &up);
-	void zoomIn(float scale);
-	void zoom(float scale);
 
-	const glm::vec3& getPos() const;
-	const glm::vec3& getUp() const;
+	void rotate(const glm::vec2 dxy);
+	void pan(const glm::vec2 dxy);
+	void zoom(float dy);
+
+	const glm::vec3& getPos() const { return pos; }
+	const glm::vec3& getUp() const { return up;  }
 	/* Convection: len(front) == len(lookat center - pos) 
 	 * or simply let front = lookat - pos
 	 * This convection makes camera rotation work properly.
 	 */
-	const glm::vec3& getFront() const;
-
-	void setSyncMoveAndLook(bool sync);
-	bool toggleSyncMoveAndLook();
-
-	glm::vec3 aup, ax;
+	const glm::vec3& getFront() const { return front;  }
 
 private:
 	glm::vec3 pos;
-	glm::vec3 moveFront; 
 	glm::vec3 up;
-	glm::vec3 lookFront;
+	glm::vec3 front;
 
-	void updateLookFront();
-
-	float yaw;
-	float pitch;
-	float roll;
+	/* Rotate axis when pan horizontally and vertically on screen */
+	glm::vec3 rotx, roty;
 
 	float fov;
 	float ofov;
 	float aspect;
-
-	bool isSyncMoveAndLook;
 };
 
