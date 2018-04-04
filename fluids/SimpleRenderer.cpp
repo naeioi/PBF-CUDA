@@ -36,7 +36,7 @@ void SimpleRenderer::init() {
 	__binding();
 
 	/* Resource allocation in constructor */
-	glm::vec3 pos(2.f, -2.f, 2.f);
+	glm::vec3 pos(0.2f, -1.5f, 0.8f);
 	float aspect = (float)WINDOW_WIDTH / WINDOW_HEIGHT;
 
 	m_camera = new Camera(pos, aspect);
@@ -124,8 +124,10 @@ void SimpleRenderer::__binding() {
 	});
 }
 
+bool move = false;
 void SimpleRenderer::__processInput() {
-
+	if (glfwGetKey(m_window, GLFW_KEY_M) == GLFW_PRESS)
+		move = true;
 }
 
 void SimpleRenderer::__render() {

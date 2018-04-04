@@ -30,7 +30,7 @@ struct getExtrema {
 		float3 p = thrust::get<0>(p_);
 		return thrust::make_tuple(
 			make_float3(max(acc_ulim.x, p.x), max(acc_ulim.y, p.y), max(acc_ulim.z, p.z)),
-			make_float3(max(acc_llim.x, p.x), max(acc_llim.y, p.y), max(acc_ulim.z, p.z)));
+			make_float3(min(acc_llim.x, p.x), min(acc_llim.y, p.y), min(acc_ulim.z, p.z)));
 	}
 };
 
@@ -151,7 +151,7 @@ void Simulator::advect()
 	advect_kernel<<<grid_size, block_size>>>(
 		dc_pos, dc_npos, 
 		dc_vel, dc_nvel, 
-		m_nparticle, m_dt, m_gravity);
+		m_nparticle, m_dt, make_float3(0, 0, -m_gravity));
 
 	/* find real limits after advection */
 	auto t = thrust::transform_reduce(
@@ -161,8 +161,8 @@ void Simulator::advect()
 		thrust::make_tuple(m_ulim, m_llim),
 		getExtrema());
 
-	m_real_ulim = thrust::get<0>(t) + m_h * LIM_EPS;
-	m_real_llim = thrust::get<1>(t) - m_h * LIM_EPS;
+	 m_real_ulim = thrust::get<0>(t) + m_h * LIM_EPS;
+	 m_real_llim = thrust::get<1>(t) - m_h * LIM_EPS;
 }
 
 void Simulator::buildGridHash()

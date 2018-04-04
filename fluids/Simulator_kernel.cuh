@@ -2,7 +2,7 @@
 
 __global__ void advect_kernel(
 	float3 *pos, float3 *npos, float3 *vel, float3 *nvel, 
-	int nparticle, float dt, float g) {
+	int nparticle, float dt, float3 g) {
 	int i = __mul24(blockIdx.x, blockDim.x) + threadIdx.x;
 	if (i < nparticle) {
 		nvel[i] = vel[i] + dt * g;

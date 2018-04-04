@@ -67,6 +67,8 @@ void FluidSystem::stepSimulate() {
 		m_simulator->step(d_pos, d_npos, d_vel, d_nvel, d_iid, d_niid, m_nparticle);
 	else 
 		m_simulator->step(d_npos, d_pos, d_nvel, d_vel, d_niid, d_iid, m_nparticle);
+	
+	m_tictoc = !m_tictoc;
 }
 
 void FluidSystem::render() {

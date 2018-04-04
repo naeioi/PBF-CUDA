@@ -38,7 +38,6 @@ private:
 	glm::vec3 rotx, roty;
 
 	float fov;
-	float ofov;
 	float aspect;
 };
 

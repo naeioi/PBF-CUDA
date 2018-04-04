@@ -1,5 +1,7 @@
 #include "FluidSystem.h"
 
+extern bool move;
+
 int main() {
 	FluidSystem fluids;
 
@@ -7,7 +9,10 @@ int main() {
 
 	while (1) {
 		// fluids.stepSource();
-		// fluids.stepSimulate();
+		if (move) {
+			fluids.stepSimulate();
+			move = false;
+		}
 		fluids.render();
 	}
 }

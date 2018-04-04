@@ -20,7 +20,7 @@ Camera::Camera(const glm::vec3 & pos, const glm::vec3 front, const glm::vec3 up,
 	: pos(pos)
 	, front(front)
 	, up(glm::normalize(up))
-	, ofov(fov), fov(fov)
+	, fov(fov)
 	, aspect(aspect)
 {
 	rotx = glm::vec3(0.f, 0.f, 1.f);
