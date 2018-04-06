@@ -14,14 +14,16 @@ __global__ void computeGridRange(uint* gridIds, uint* gridStart, uint* gridEnd, 
 	int i = __mul24(blockIdx.x, blockDim.x) + threadIdx.x;
 	if (i >= n) return;
 
-	extern __shared__ uint pre[];
+	__shared__ uint pre[1024 * 4];
 
 	pre[threadIdx.x + 1] = gridIds[i];
+	//pre[0] = gridIds[i];
 	if (threadIdx.x == 0)
 		pre[0] = i == 0 ? (uint)-1 : gridIds[i - 1];
 	__syncthreads();
 
 	uint current = pre[threadIdx.x+1], last = pre[threadIdx.x];
+	// uint current = 0, last = 0;
 	
 	if (i == n - 1) {
 		gridEnd[current] = i;
@@ -29,7 +31,9 @@ __global__ void computeGridRange(uint* gridIds, uint* gridStart, uint* gridEnd, 
 	}
 
 	if (current != last) {
-		gridStart[current] = gridEnd[last] = i;
+		gridStart[current];
+		if(last != (uint)-1)
+			gridEnd[last] = i;
 	}
 }
 

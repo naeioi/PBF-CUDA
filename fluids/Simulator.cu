@@ -5,6 +5,7 @@
 #include <thrust/execution_policy.h>
 #include <thrust/sort.h>
 #include <thrust/functional.h>
+#include <thrust/device_ptr.h>
 
 #include "Simulator_kernel.cuh"
 
@@ -30,7 +31,7 @@ struct getExtrema {
 		float3 p = thrust::get<0>(p_);
 		return thrust::make_tuple(
 			make_float3(max(acc_ulim.x, p.x), max(acc_ulim.y, p.y), max(acc_ulim.z, p.z)),
-			make_float3(min(acc_llim.x, p.x), min(acc_llim.y, p.y), min(acc_ulim.z, p.z)));
+			make_float3(min(acc_llim.x, p.x), min(acc_llim.y, p.y), min(acc_llim.z, p.z)));
 	}
 };
 
@@ -72,7 +73,7 @@ struct getGridId {
 	template <typename T> __device__
 		uint operator()(T pos) {
 		float3 diff = pos - llim;
-		int x = ceilDiv(diff.x, h), y = ceilDiv(diff.y, h), z = ceilDiv(diff.z, h);
+		int x = (int)ceilf(diff.x / h), y = (int)ceilf(diff.y / h), z = (int)ceilf(diff.z / h);
 		return (uint)(x * gridDim.y * gridDim.z + y * gridDim.z + z);
 	}
 };
@@ -155,8 +156,7 @@ void Simulator::advect()
 
 	/* find real limits after advection */
 	auto t = thrust::transform_reduce(
-		thrust::device,
-		dc_npos, dc_npos + m_nparticle,
+		thrust::device_ptr<float3>(dc_npos), thrust::device_ptr<float3>(dc_npos + m_nparticle),
 		helper_duplicate(),
 		thrust::make_tuple(m_ulim, m_llim),
 		getExtrema());
@@ -176,19 +176,23 @@ void Simulator::buildGridHash()
 
 	int block_size = 256;
 	int grid_size = ceilDiv(m_nparticle, block_size);
+	int smem = 2 * sizeof(uint) * (block_size + 2);
+
+	thrust::device_ptr<float3> d_npos(dc_npos), d_nvel(dc_nvel);
+	thrust::device_ptr<uint> d_gridId(dc_gridId);
 
 	/* Compute real_ulim and real_llim */
 	computeGridHashDim();
 	/* Compute gridId for each particle */
 	thrust::transform(
-		dc_npos, dc_npos + m_nparticle,
-		dc_gridId,
+		d_npos, d_npos + m_nparticle,
+		d_gridId,
 		getGridId(m_real_llim, m_gridHashDim, m_h));
 
 	/* sort (gridId, pos, vel) by gridId */
 	thrust::sort_by_key(
-		dc_gridId, dc_gridId + m_nparticle,
-		thrust::make_zip_iterator(thrust::make_tuple(dc_npos, dc_nvel)));
+		d_gridId, d_gridId + m_nparticle,
+		thrust::make_zip_iterator(thrust::make_tuple(d_npos, d_nvel)));
 
 	/* Compute [gradStart, gradEnd) */
 	computeGridRange<<<grid_size, block_size>>>(dc_gridId, dc_gridStart, dc_gridEnd, m_nparticle);
@@ -199,7 +203,7 @@ void Simulator::computeGridHashDim() {
 	 * Output: m_gridHashDim
 	 */
 	float3 diff = m_real_ulim - m_real_llim;
-	m_gridHashDim = make_uint3(ceilDiv(diff.x, m_h), ceilDiv(diff.y, m_h), ceilDiv(diff.z, m_h));
+	m_gridHashDim = make_uint3((uint)ceilf(diff.x / m_h), ceilf(diff.y / m_h), ceilf(diff.z / m_h));
 }
 
 void Simulator::correctDensity() 

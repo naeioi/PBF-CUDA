@@ -9,7 +9,7 @@ int main() {
 
 	while (1) {
 		// fluids.stepSource();
-		if (move) {
+		if (1) {
 			fluids.stepSimulate();
 			move = false;
 		}

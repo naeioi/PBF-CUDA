@@ -39,7 +39,7 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 
 	/* Real upper and lowe limit after advection */
 	advect();
-	// buildGridHash();
+	buildGridHash();
 	for (uint i = 0; i < m_niter; i++) {
 		/* Warn: should be aware that correctDensity() assumes dc_pos as source and dc_npos as destination.
 		 * Thus better maintains an even m_niter, otherwise especial care to swap dc_npos to dc_pos should be taken, 
@@ -52,6 +52,8 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 	// updateVelocity();
 	// correctVelocity();
 
+	cudaDeviceSynchronize();
+
 	/* Simulate logic ends */
 	checkCudaErrors(cudaGraphicsUnmapResources(1, &dcr_pos, 0));
 	checkCudaErrors(cudaGraphicsUnmapResources(1, &dcr_vel, 0));
@@ -60,6 +62,10 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 	checkCudaErrors(cudaGraphicsUnmapResources(1, &dcr_nvel, 0));
 	checkCudaErrors(cudaGraphicsUnmapResources(1, &dcr_niid, 0));
 
+	/**
+	 * Omitting unregister resource will cause memory leak
+	 * Program will be blown away after several iterations.
+	 */
 	checkCudaErrors(cudaGraphicsUnregisterResource(dcr_pos));
 	checkCudaErrors(cudaGraphicsUnregisterResource(dcr_vel));
 	checkCudaErrors(cudaGraphicsUnregisterResource(dcr_iid));
