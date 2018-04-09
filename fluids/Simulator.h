@@ -13,6 +13,10 @@ public:
 		checkCudaErrors(cudaMalloc(&dc_gridEnd, sizeof(uint) * MAX_PARTICLE_NUM));
 		checkCudaErrors(cudaMalloc(&dc_lambda, sizeof(float) * MAX_PARTICLE_NUM));
 		checkCudaErrors(cudaMalloc(&dc_grad, sizeof(float3) * MAX_PARTICLE_NUM));
+
+		/* TODO: can zero initialization be eliminated? This is costly. */
+		cudaMemset(dc_gridStart, 0, sizeof(uint) * MAX_PARTICLE_NUM);
+		cudaMemset(dc_gridEnd, 0, sizeof(uint) * MAX_PARTICLE_NUM);
 	};
 	~Simulator() {
 		checkCudaErrors(cudaFree(dc_gridId));

@@ -14,10 +14,10 @@ __global__ void computeGridRange(uint* gridIds, uint* gridStart, uint* gridEnd, 
 	int i = __mul24(blockIdx.x, blockDim.x) + threadIdx.x;
 	if (i >= n) return;
 
-	__shared__ uint pre[1024 * 4];
+	extern __shared__ uint pre[];
 
 	pre[threadIdx.x + 1] = gridIds[i];
-	//pre[0] = gridIds[i];
+	//pre[0] = cellIds[i];
 	if (threadIdx.x == 0)
 		pre[0] = i == 0 ? (uint)-1 : gridIds[i - 1];
 	__syncthreads();
@@ -31,21 +31,41 @@ __global__ void computeGridRange(uint* gridIds, uint* gridStart, uint* gridEnd, 
 	}
 
 	if (current != last) {
-		gridStart[current];
+		gridStart[current] = i;
 		if(last != (uint)-1)
 			gridEnd[last] = i;
 	}
 }
 
-template <typename Func1, typename Func2, typename Func3, typename Func4>
+__device__
+float h_poly6(float h, float r2) {
+	float h2 = h * h;
+	float h3 = h2 * h;
+	float h9 = h3 * h3;
+	float coef = 315.f / (64.f * M_PI *  h9);
+	return coef * (h2 - r2) * (h2 - r2) * (h2 - r2);
+}
+
+__device__ 
+float3 h_spikyGrad(float h, float3 r) {
+	float h6 = h * h;
+	h6 = h6 * h6 * h6;
+	float coef = -45.f / (M_PI * h6);
+	float rlen = length(r);
+	return (coef * (h - rlen) * (h - rlen)) * normalize(r);
+}
+
+
+template </* typename Func1, typename Func2, */ typename Func3, typename Func4>
 __global__
 void computeLambda(
 	float* lambdas, float3* grads,
-	uint* gridIds, uint* gridStarts, uint* gridEnd,
-	uint3 gridDim,
+	uint* cellIds, uint* cellStarts, uint* cellEnds,
+	uint3 cellDim,
 	float3* pos, uint n, float pho0, float lambda_eps,
-	Func1 poly6, Func2 spikyGrad,
-	Func3 getGridxyz, Func4 xyzToId) {
+	/* Func1 poly6, Func2 spikyGrad, */ float h,
+	Func3 posToCellxyz, Func4 cellxyzToId,
+	uint* maxStart, uint* maxEnd) {
 	
 	int i = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
 	
@@ -53,28 +73,26 @@ void computeLambda(
 
 	/* -- Compute lambda -- */
 
-	uint3 ind = getGridxyz(pos[i]);
+	int3 ind = posToCellxyz(pos[i]);
 	float pho = 0.f;
 	float3 grad = make_float3(0, 0, 0);
-#pragma unroll 3
+// #pragma unroll 3
 	for (int dx = -1; dx <= 1; dx++) {
-		int x = ind.x + dx;
-		if (x < 0 || x >= gridDim.x) continue;
-#pragma unroll 3
+// #pragma unroll 3
 		for (int dy = -1; dy <= 1; dy++) {
-			int y = ind.y + dy;
-			if (y < 0 || y >= gridDim.y) continue;
-#pragma unroll 3
+// #pragma unroll 3
 			for (int dz = -1; dz <= 1; dz++) {
-				int z = ind.z + dz;
-				if (z < 0 || z >= gridDim.z) continue;
-				uint gridId = xyzToId(x, y, z);
-				uint start = gridStarts[gridId], end = gridEnd[gridId];
+				int x = ind.x + dx, y = ind.y + dy, z = ind.z + dz;
+				int cellId = cellxyzToId(x, y, z);
+				uint start = cellStarts[cellId], end = cellEnds[cellId];
+				// atomicMax(maxStart, start);
+				// atomicMax(maxEnd, end); 
 				for (int j = start; j < end; j++) if (j != i) {
 					float3 d = pos[i] - pos[j];
 					float r2 = d.x * d.x + d.y * d.y + d.z * d.z;
-					pho += poly6(r2);
-					grad += spikyGrad(d);
+					pho += h_poly6(h, r2);
+					/* TODO: call to spikyGrad will crash the kernel */
+					grad += h_spikyGrad(h, d);
 				}
 			}
 		}

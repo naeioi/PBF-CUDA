@@ -13,7 +13,7 @@ FluidSystem::FluidSystem()
 		pho0 = 6378.f,
 		lambda_eps = 600.f;
 	const float3 ulim = make_float3(.5f, .5f, 1.f), llim = make_float3(-.5f, -.5f, 0.f);
-	const int niter = 2;
+	const int niter = 1;
 
 	m_simulator = new Simulator(g, h, dt, pho0, lambda_eps, niter, ulim, llim);
 	m_renderer = new SimpleRenderer(ulim, llim);

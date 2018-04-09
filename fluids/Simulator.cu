@@ -42,11 +42,11 @@ struct getGridxyz {
 	__host__ __device__
 	getGridxyz(const float3 &llim, const uint3 &gridDim, float h) : llim(llim), gridDim(gridDim), h(2.f*h) {}
 
-	template <typename T> __device__
-	uint3 operator()(T pos) {
+	__device__
+	int3 operator()(float3 pos) {
 		float3 diff = pos - llim;
 		int x = diff.x / h, y = diff.y / h, z = diff.z / h;
-		return make_uint3(x, y, z);
+		return make_int3(x, y, z);
 	}
 };
 
@@ -56,9 +56,14 @@ struct xyzToId {
 	xyzToId(const uint3 &gridDim) : gridDim(gridDim) {}
 
 	template <typename T> __device__
-	uint operator()(T x, T y, T z) {
-		if (x < 0 || x >= gridDim.x || y < 0 || y >= gridDim.y || z < 0 || z >= gridDim.z) return (uint)-1;
-		return (uint)(x * gridDim.y * gridDim.z + y * gridDim.z + z);
+	int operator()(T x, T y, T z) {
+		/*if (x < 0 || x >= gridDim.x || y < 0 || y >= gridDim.y || z < 0 || z >= gridDim.z)
+			return -1;*/
+		/* TODO */
+		x = x & 15;
+		y = y & 15;
+		z = z & 15;
+		return x * gridDim.y * gridDim.z + y * gridDim.z + z;
 	}
 };
 
@@ -73,7 +78,7 @@ struct getGridId {
 	template <typename T> __device__
 		uint operator()(T pos) {
 		float3 diff = pos - llim;
-		int x = (int)ceilf(diff.x / h), y = (int)ceilf(diff.y / h), z = (int)ceilf(diff.z / h);
+		int x = diff.x / h, y = diff.y / h, z = diff.z / h;
 		return (uint)(x * gridDim.y * gridDim.z + y * gridDim.z + z);
 	}
 };
@@ -102,7 +107,8 @@ struct getSpikyGrad {
 
 	__device__
 	float3 operator()(float3 r) {
-		return coef * (h - r) * (h - r) * normalize(r);
+		float rlen = length(r);
+		return coef * (h - rlen) * (h - rlen) * normalize(r);
 	}
 };
 
@@ -176,7 +182,7 @@ void Simulator::buildGridHash()
 
 	int block_size = 256;
 	int grid_size = ceilDiv(m_nparticle, block_size);
-	int smem = 2 * sizeof(uint) * (block_size + 2);
+	int smem = sizeof(uint) * (block_size + 2);
 
 	thrust::device_ptr<float3> d_npos(dc_npos), d_nvel(dc_nvel);
 	thrust::device_ptr<uint> d_gridId(dc_gridId);
@@ -195,7 +201,10 @@ void Simulator::buildGridHash()
 		thrust::make_zip_iterator(thrust::make_tuple(d_npos, d_nvel)));
 
 	/* Compute [gradStart, gradEnd) */
-	computeGridRange<<<grid_size, block_size>>>(dc_gridId, dc_gridStart, dc_gridEnd, m_nparticle);
+	computeGridRange<<<grid_size, block_size, smem>>>(dc_gridId, dc_gridStart, dc_gridEnd, m_nparticle);
+
+	// cudaDeviceSynchronize();
+	// getLastCudaError("Kernel execution failed: computeGridRange");
 }
 
 void Simulator::computeGridHashDim() {
@@ -203,7 +212,7 @@ void Simulator::computeGridHashDim() {
 	 * Output: m_gridHashDim
 	 */
 	float3 diff = m_real_ulim - m_real_llim;
-	m_gridHashDim = make_uint3((uint)ceilf(diff.x / m_h), ceilf(diff.y / m_h), ceilf(diff.z / m_h));
+	m_gridHashDim = make_uint3((uint)ceilf(diff.x / m_h), (uint)ceilf(diff.y / m_h), (uint)ceilf(diff.z / m_h));
 }
 
 void Simulator::correctDensity() 
@@ -214,20 +223,38 @@ void Simulator::correctDensity()
 	int block_size = 256;
 	int grid_size = ceilDiv(m_nparticle, block_size);
 
+	uint* arr;
+	cudaMallocManaged(&arr, sizeof(uint) * 3);
+
+	// printf("maxStart = %u, maxMin = %u\n", arr[0], arr[1]);
+
+	/// cudaDeviceSynchronize();
 	/* dc_npos -> dc_npos */
 	computeLambda<<<grid_size, block_size>>>(
 		dc_lambda, dc_grad,
 		dc_gridId, dc_gridStart, dc_gridEnd,
 		m_gridHashDim,
 		dc_npos, m_nparticle, m_pho0, m_lambda_eps,
-		getPoly6(m_h), getSpikyGrad(m_h),
-		getGridxyz(m_real_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim)); 
+		/* getPoly6(m_h), getSpikyGrad(m_h), */ m_h,
+		getGridxyz(m_real_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim),
+		&arr[0], &arr[1]);
+
+	cudaDeviceSynchronize();
+	getLastCudaError("Kernel execution failed: computeLambda");
+
+	// printf("maxStart = %u, maxMin = %u\n", arr[0], arr[1]);
+	// printf("\n");
 
 	/* update position */
+	thrust::device_ptr<float3> d_npos(dc_npos), d_grad(dc_grad);
+	thrust::device_ptr<float> d_lambda(dc_lambda);
 	thrust::transform(
-		thrust::make_zip_iterator(thrust::make_tuple(dc_npos, dc_grad, dc_lambda)),
-		thrust::make_zip_iterator(thrust::make_tuple(dc_npos+m_nparticle, dc_grad+m_nparticle, dc_lambda+m_nparticle)),
-		dc_npos, h_updatePosition(m_ulim, m_llim));
+		thrust::make_zip_iterator(thrust::make_tuple(d_npos, d_grad, d_lambda)),
+		thrust::make_zip_iterator(thrust::make_tuple(d_npos+m_nparticle, d_grad+m_nparticle, d_lambda+m_nparticle)),
+		d_npos, h_updatePosition(m_ulim, m_llim));
+
+	cudaDeviceSynchronize();
+	getLastCudaError("Kernel execution failed: computeLambda");
 }
 
 void Simulator::updateVelocity() {

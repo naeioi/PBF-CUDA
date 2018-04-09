@@ -45,7 +45,7 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 		 * Thus better maintains an even m_niter, otherwise especial care to swap dc_npos to dc_pos should be taken, 
 		 * which is potentially expensive in terms of performance. 
 		 */
-		// correctDensity();
+		correctDensity();
 	}
 
 	/* update Velocity */
