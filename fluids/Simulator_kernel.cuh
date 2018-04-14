@@ -7,6 +7,7 @@ __global__ void advect_kernel(
 	if (i < nparticle) {
 		nvel[i] = vel[i] + dt * g;
 		npos[i] = pos[i] + dt * nvel[i];
+		// printf("(%f,%f,%f) => (%f,%f,%f)\n", pos[i].x, pos[i].y, pos[i].z, npos[i].x, npos[i].y, npos[i].z);
 	}
 }
 
@@ -17,29 +18,34 @@ __global__ void computeGridRange(uint* gridIds, uint* gridStart, uint* gridEnd, 
 	extern __shared__ uint pre[];
 
 	pre[threadIdx.x + 1] = gridIds[i];
-	//pre[0] = cellIds[i];
-	if (threadIdx.x == 0)
-		pre[0] = i == 0 ? (uint)-1 : gridIds[i - 1];
+	// printf("gridIds[(%d, %d)=%d] = %u\n", blockIdx.x, threadIdx.x, i, gridIds[i]);
+
+	pre[0] = i == 0 ? (uint)-1 : gridIds[i - 1];
 	__syncthreads();
 
 	uint current = pre[threadIdx.x+1], last = pre[threadIdx.x];
 	// uint current = 0, last = 0;
 	
 	if (i == n - 1) {
-		gridEnd[current] = i;
+		gridEnd[current] = i + 1;
+		// printf("gridEnd[%u]=%d\n", current, i);
 		return;
 	}
 
 	if (current != last) {
 		gridStart[current] = i;
-		if(last != (uint)-1)
+		// printf("gridStart[%u]=%d\n", current, i);
+		if (last != (uint)-1) {
 			gridEnd[last] = i;
+			// printf("gridEnd[%u]=%d\n", last, i);
+		}
 	}
 }
 
 __device__
 float h_poly6(float h, float r2) {
 	float h2 = h * h;
+	if (r2 >= h2) return 0;
 	float h3 = h2 * h;
 	float h9 = h3 * h3;
 	float coef = 315.f / (64.f * M_PI *  h9);
@@ -48,10 +54,11 @@ float h_poly6(float h, float r2) {
 
 __device__ 
 float3 h_spikyGrad(float h, float3 r) {
+	float rlen = length(r);
+	if (rlen >= h) return make_float3(0.f, 0.f, 0.f);
 	float h6 = h * h;
 	h6 = h6 * h6 * h6;
 	float coef = -45.f / (M_PI * h6);
-	float rlen = length(r);
 	return (coef * (h - rlen) * (h - rlen)) * normalize(r);
 }
 

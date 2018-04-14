@@ -26,12 +26,12 @@ struct getExtrema {
 	getExtrema() {}
 
 	template <typename T> __device__
-	T operator()(T acc_, T p_) { 
-		float3 acc_ulim = thrust::get<0>(acc_), acc_llim = thrust::get<1>(acc_);
-		float3 p = thrust::get<0>(p_);
+	T operator()(T a, T b) { 
+		float3 &amax = thrust::get<0>(a), &amin = thrust::get<1>(a),
+			   &bmax = thrust::get<0>(b), &bmin = thrust::get<1>(b);
 		return thrust::make_tuple(
-			make_float3(max(acc_ulim.x, p.x), max(acc_ulim.y, p.y), max(acc_ulim.z, p.z)),
-			make_float3(min(acc_llim.x, p.x), min(acc_llim.y, p.y), min(acc_llim.z, p.z)));
+			make_float3(fmaxf(amax.x, bmax.x), fmaxf(amax.y, bmax.y), fmaxf(amax.z, bmax.z)),
+			make_float3(fminf(amin.x, bmin.x), fminf(amin.y, bmin.y), fminf(amin.z, bmin.z)));
 	}
 };
 
@@ -73,11 +73,12 @@ struct getGridId {
 	float h;
 	uint3 gridDim;
 	__host__ __device__
-		getGridId(const float3 &llim, const uint3 &gridDim, float h) : llim(llim), gridDim(gridDim), h(2.f*h) {}
+	getGridId(const float3 &llim, const uint3 &gridDim, float h) : llim(llim), gridDim(gridDim), h(2.f*h) {}
 
 	template <typename T> __device__
 		uint operator()(T pos) {
 		float3 diff = pos - llim;
+		// printf("(%f,%f,%f)\n", diff.x, diff.y, diff.z);
 		int x = diff.x / h, y = diff.y / h, z = diff.z / h;
 		return (uint)(x * gridDim.y * gridDim.z + y * gridDim.z + z);
 	}
@@ -121,11 +122,11 @@ struct h_updatePosition {
 	float3 operator()(T t) {
 		float3 pos = thrust::get<0>(t), grad = thrust::get<1>(t);
 		float lambda = thrust::get<2>(t);
-		pos += lambda * grad;
+		// pos += lambda * grad;
 		/* for now, project particles out of bound onto bounding box surface */
-		pos.x = max(min(pos.x, ulim.x), llim.x);
-		pos.y = max(min(pos.y, ulim.y), llim.y);
-		pos.z = max(min(pos.z, ulim.z), llim.z);
+		pos.x = fmaxf(fminf(pos.x, ulim.x), llim.x);
+		pos.y = fmaxf(fminf(pos.y, ulim.y), llim.y);
+		pos.z = fmaxf(fminf(pos.z, ulim.z), llim.z);
 
 		return pos;
 	}
@@ -139,6 +140,7 @@ struct h_updateVelocity {
 	__device__
 	float3 operator()(T t) {
 		float3 pos = thrust::get<0>(t), npos = thrust::get<1>(t);
+		// printf("(%f,%f,%f) -> (%f,%f,%f)\n", pos.x, pos.y, pos.z, npos.x, npos.y, npos.z);
 		return (npos - pos) * inv_dt;
 	}
 };
@@ -169,6 +171,8 @@ void Simulator::advect()
 
 	 m_real_ulim = thrust::get<0>(t) + m_h * LIM_EPS;
 	 m_real_llim = thrust::get<1>(t) - m_h * LIM_EPS;
+	 // fprintf(stderr, "m_real_ulim(%f,%f,%f)\n", m_real_ulim.x, m_real_ulim.y, m_real_ulim.z);
+	 // fprintf(stderr, "m_real_llim(%f,%f,%f)\n", m_real_llim.x, m_real_llim.y, m_real_llim.z);
 }
 
 void Simulator::buildGridHash()
@@ -184,7 +188,7 @@ void Simulator::buildGridHash()
 	int grid_size = ceilDiv(m_nparticle, block_size);
 	int smem = sizeof(uint) * (block_size + 2);
 
-	thrust::device_ptr<float3> d_npos(dc_npos), d_nvel(dc_nvel);
+	thrust::device_ptr<float3> d_pos(dc_pos), d_vel(dc_vel), d_npos(dc_npos), d_nvel(dc_nvel);
 	thrust::device_ptr<uint> d_gridId(dc_gridId);
 
 	/* Compute real_ulim and real_llim */
@@ -198,13 +202,21 @@ void Simulator::buildGridHash()
 	/* sort (gridId, pos, vel) by gridId */
 	thrust::sort_by_key(
 		d_gridId, d_gridId + m_nparticle,
-		thrust::make_zip_iterator(thrust::make_tuple(d_npos, d_nvel)));
+		thrust::make_zip_iterator(thrust::make_tuple(d_pos, d_vel, d_npos, d_nvel)));
+
+	// cudaDeviceSynchronize();
+	// getLastCudaError("Kernel execution failed: before computeGridRange");
 
 	/* Compute [gradStart, gradEnd) */
+	// int *counter;
+	// cudaMallocManaged(&counter, sizeof(counter));
 	computeGridRange<<<grid_size, block_size, smem>>>(dc_gridId, dc_gridStart, dc_gridEnd, m_nparticle);
 
 	// cudaDeviceSynchronize();
 	// getLastCudaError("Kernel execution failed: computeGridRange");
+
+	/*printf("Counter=%d\n", *counter); 
+	exit(0);*/
 }
 
 void Simulator::computeGridHashDim() {
@@ -239,8 +251,8 @@ void Simulator::correctDensity()
 		getGridxyz(m_real_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim),
 		&arr[0], &arr[1]);
 
-	cudaDeviceSynchronize();
-	getLastCudaError("Kernel execution failed: computeLambda");
+	// cudaDeviceSynchronize();
+	// getLastCudaError("Kernel execution failed: computeLambda");
 
 	// printf("maxStart = %u, maxMin = %u\n", arr[0], arr[1]);
 	// printf("\n");
@@ -253,14 +265,15 @@ void Simulator::correctDensity()
 		thrust::make_zip_iterator(thrust::make_tuple(d_npos+m_nparticle, d_grad+m_nparticle, d_lambda+m_nparticle)),
 		d_npos, h_updatePosition(m_ulim, m_llim));
 
-	cudaDeviceSynchronize();
-	getLastCudaError("Kernel execution failed: computeLambda");
+	// cudaDeviceSynchronize();
+	// getLastCudaError("Kernel execution failed: computeLambda");
 }
 
 void Simulator::updateVelocity() {
 	/* Warn: assume dc_pos updates to dc_npos after correctDensity() */
+	thrust::device_ptr<float3> d_pos(dc_pos), d_npos(dc_npos), d_nvel(dc_nvel);
 	thrust::transform(
-		thrust::make_zip_iterator(thrust::make_tuple(dc_pos, dc_npos)),
-		thrust::make_zip_iterator(thrust::make_tuple(dc_pos + m_nparticle, dc_npos + m_nparticle)),
-		dc_nvel, h_updateVelocity(m_dt));
+		thrust::make_zip_iterator(thrust::make_tuple(d_pos, d_npos)),
+		thrust::make_zip_iterator(thrust::make_tuple(d_pos + m_nparticle, d_npos + m_nparticle)),
+		d_nvel, h_updateVelocity(m_dt));
 }

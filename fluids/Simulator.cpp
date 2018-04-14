@@ -38,6 +38,8 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 	/* Simulate logic */
 
 	/* Real upper and lowe limit after advection */
+	static int round = 0;
+	fprintf(stderr, "-- Round %d --\n", round++);
 	advect();
 	buildGridHash();
 	for (uint i = 0; i < m_niter; i++) {
@@ -49,10 +51,11 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 	}
 
 	/* update Velocity */
-	// updateVelocity();
+	updateVelocity();
 	// correctVelocity();
 
 	cudaDeviceSynchronize();
+	//exit(0);
 
 	/* Simulate logic ends */
 	checkCudaErrors(cudaGraphicsUnmapResources(1, &dcr_pos, 0));
