@@ -141,10 +141,12 @@ void SimpleRenderer::__render() {
 		m_camera->use(Shader::now());
 
 		/* draw particles */
+		m_shader->setUnif("color", glm::vec4(1.f, 0.f, 0.f, 1.f));
 		glBindVertexArray(d_vao);
 		glDrawArrays(GL_POINTS, 0, m_nparticle);
 
 		/* draw bounding box */
+		m_shader->setUnif("color", glm::vec4(1.f, 1.f, 1.f, 1.f));
 		glBindVertexArray(d_bbox_vao);
 		glDrawArrays(GL_LINES, 0, 12 * 2);
 

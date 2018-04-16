@@ -120,9 +120,8 @@ struct h_updatePosition {
 	template <typename T>
 	__device__
 	float3 operator()(T t) {
-		float3 pos = thrust::get<0>(t), grad = thrust::get<1>(t);
-		float lambda = thrust::get<2>(t);
-		// pos += lambda * grad;
+		float3 pos = thrust::get<0>(t), dpos = thrust::get<1>(t);
+		pos += dpos;
 		/* for now, project particles out of bound onto bounding box surface */
 		pos.x = fmaxf(fminf(pos.x, ulim.x), llim.x);
 		pos.y = fmaxf(fminf(pos.y, ulim.y), llim.y);
@@ -160,7 +159,8 @@ void Simulator::advect()
 	advect_kernel<<<grid_size, block_size>>>(
 		dc_pos, dc_npos, 
 		dc_vel, dc_nvel, 
-		m_nparticle, m_dt, make_float3(0, 0, -m_gravity));
+		m_nparticle, m_dt, make_float3(0, 0, -m_gravity),
+		m_ulim, m_llim);
 
 	/* find real limits after advection */
 	auto t = thrust::transform_reduce(
@@ -235,34 +235,33 @@ void Simulator::correctDensity()
 	int block_size = 256;
 	int grid_size = ceilDiv(m_nparticle, block_size);
 
-	uint* arr;
-	cudaMallocManaged(&arr, sizeof(uint) * 3);
-
 	// printf("maxStart = %u, maxMin = %u\n", arr[0], arr[1]);
 
 	/// cudaDeviceSynchronize();
 	/* dc_npos -> dc_npos */
 	computeLambda<<<grid_size, block_size>>>(
-		dc_lambda, dc_grad,
+		dc_lambda, /*dc_gradl2,*/
 		dc_gridId, dc_gridStart, dc_gridEnd,
 		m_gridHashDim,
 		dc_npos, m_nparticle, m_pho0, m_lambda_eps,
 		/* getPoly6(m_h), getSpikyGrad(m_h), */ m_h,
-		getGridxyz(m_real_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim),
-		&arr[0], &arr[1]);
+		getGridxyz(m_real_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim));
 
 	// cudaDeviceSynchronize();
 	// getLastCudaError("Kernel execution failed: computeLambda");
 
-	// printf("maxStart = %u, maxMin = %u\n", arr[0], arr[1]);
-	// printf("\n");
+	computedpos<<<grid_size, block_size>>>(
+		dc_lambda, /*dc_gradl2,*/
+		dc_gridId, dc_gridStart, dc_gridEnd,
+		m_gridHashDim,
+		dc_npos, dc_dpos, m_nparticle, m_pho0, m_h,
+		getGridxyz(m_real_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim));
 
 	/* update position */
-	thrust::device_ptr<float3> d_npos(dc_npos), d_grad(dc_grad);
-	thrust::device_ptr<float> d_lambda(dc_lambda);
+	thrust::device_ptr<float3> d_npos(dc_npos), d_dpos(dc_dpos);
 	thrust::transform(
-		thrust::make_zip_iterator(thrust::make_tuple(d_npos, d_grad, d_lambda)),
-		thrust::make_zip_iterator(thrust::make_tuple(d_npos+m_nparticle, d_grad+m_nparticle, d_lambda+m_nparticle)),
+		thrust::make_zip_iterator(thrust::make_tuple(d_npos, d_dpos)),
+		thrust::make_zip_iterator(thrust::make_tuple(d_npos+m_nparticle, d_dpos+m_nparticle)),
 		d_npos, h_updatePosition(m_ulim, m_llim));
 
 	// cudaDeviceSynchronize();

@@ -19,8 +19,8 @@ FluidSystem::FluidSystem()
 	m_renderer = new SimpleRenderer(ulim, llim);
 	m_source = new FixedCubeSource(
 		/* limits */  make_float3(-.5f, .5f, 1.f), make_float3(-.5f+.25f, .5f-.25f, 1.f-.25f), 
-		/* numbers */ make_int3(20, 20, 20));
-	m_nparticle = 20 * 20 * 20;
+		/* numbers */ make_int3(40, 40, 40));
+	m_nparticle = 40 * 40 * 40;
 
 	/* Initialize vertex buffer */
 	glGenBuffers(1, &d_pos);

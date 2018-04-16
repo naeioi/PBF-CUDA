@@ -12,7 +12,8 @@ public:
 		checkCudaErrors(cudaMalloc(&dc_gridStart, sizeof(uint) * MAX_PARTICLE_NUM));
 		checkCudaErrors(cudaMalloc(&dc_gridEnd, sizeof(uint) * MAX_PARTICLE_NUM));
 		checkCudaErrors(cudaMalloc(&dc_lambda, sizeof(float) * MAX_PARTICLE_NUM));
-		checkCudaErrors(cudaMalloc(&dc_grad, sizeof(float3) * MAX_PARTICLE_NUM));
+		checkCudaErrors(cudaMalloc(&dc_gradl2, sizeof(float) * MAX_PARTICLE_NUM));
+		checkCudaErrors(cudaMalloc(&dc_dpos, sizeof(float3) * MAX_PARTICLE_NUM));
 
 		/* TODO: can zero initialization be eliminated? This is costly. */
 		cudaMemset(dc_gridStart, 0, sizeof(uint) * MAX_PARTICLE_NUM);
@@ -23,7 +24,8 @@ public:
 		checkCudaErrors(cudaFree(dc_gridStart));
 		checkCudaErrors(cudaFree(dc_gridEnd));
 		checkCudaErrors(cudaFree(dc_lambda));
-		checkCudaErrors(cudaFree(dc_grad));
+		checkCudaErrors(cudaFree(dc_gradl2));
+		checkCudaErrors(cudaFree(dc_dpos));
 	}
 
 	/* TODO: may swap(d_pos, d_npos), i.e., the destination is assigned by Simulator, rather than caller */
@@ -39,8 +41,8 @@ private:
 	float3 *dc_pos, *dc_npos, *dc_vel, *dc_nvel;
 	uint *dc_iid, *dc_niid;
 	uint *dc_gridId, *dc_gridStart, *dc_gridEnd;
-	float* dc_lambda;
-	float3* dc_grad;
+	float* dc_lambda, *dc_gradl2;
+	float3 *dc_dpos;
 
 	float m_gravity, m_h, m_dt, m_pho0, m_lambda_eps;
 	uint m_niter;

@@ -3,6 +3,7 @@
 
 #define M_PI 3.14159265359
 #define LIM_EPS 1e-2
+#define KERNAL_EPS 1e-3
 const int MAX_PARTICLE_NUM = 1 << 20;
 
 typedef unsigned int uint;
