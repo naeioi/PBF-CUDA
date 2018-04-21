@@ -13,17 +13,17 @@ FluidSystem::FluidSystem()
 		pho0 = 7000.f,
 		lambda_eps = 900.f,
 		delta_q = 0.3 * h,
-		k_corr = 0,
+		k_corr = 0.0005f,
 		n_corr = 4;
 	const float3 ulim = make_float3(.5f, .5f, 1.f), llim = make_float3(-.5f, -.5f, 0.f);
-	const int niter = 1;
+	const int niter = 4;
 
 	m_simulator = new Simulator(g, h, dt, pho0, lambda_eps, delta_q, k_corr, n_corr, niter, ulim, llim);
 	m_renderer = new SimpleRenderer(ulim, llim);
 	m_source = new FixedCubeSource(
 		/* limits */  make_float3(.25f, .25f, 0.3f), make_float3(-.25f, -.25f, 0.f),
-		/* numbers */ make_int3(20, 20, 1));
-	m_nparticle = 20 * 20 * 1;
+		/* numbers */ make_int3(20, 20, 20));
+	m_nparticle = 20 * 20 * 10;
 
 	/* Initialize vertex buffer */
 	glGenBuffers(1, &d_pos);

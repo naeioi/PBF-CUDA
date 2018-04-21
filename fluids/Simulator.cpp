@@ -46,9 +46,6 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 		correctDensity();
 	}
 
-	cudaDeviceSynchronize();
-	exit(0);
-
 	/* update Velocity */
 	updateVelocity();
 	// correctVelocity();

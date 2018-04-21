@@ -141,7 +141,6 @@ struct h_updateVelocity {
 	__device__
 	float3 operator()(T t) {
 		float3 pos = thrust::get<0>(t), npos = thrust::get<1>(t);
-		// printf("(%f,%f,%f) -> (%f,%f,%f)\n", pos.x, pos.y, pos.z, npos.x, npos.y, npos.z);
 		return (npos - pos) * inv_dt;
 	}
 };
@@ -215,7 +214,7 @@ void Simulator::correctDensity()
 	// cudaDeviceSynchronize();
 	// getLastCudaError("Kernel execution failed: computeLambda");
 
-	m_coef_corr = -m_k_corr / powf(h_poly6(m_delta_q, m_h), m_n_corr);
+	m_coef_corr = -m_k_corr / powf(h_poly6(m_h, m_delta_q*m_delta_q), m_n_corr);
 
 	computedpos<<<grid_size, block_size>>>(
 		dc_lambda, 

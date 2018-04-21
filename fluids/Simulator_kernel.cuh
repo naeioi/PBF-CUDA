@@ -20,7 +20,7 @@ __global__ void computeGridRange(uint* gridIds, uint* gridStart, uint* gridEnd, 
 	if (i < n) {
 		pre[threadIdx.x + 1] = gridIds[i];
 		pre[0] = i == 0 ? (uint)-1 : gridIds[i - 1];
-		printf("Particle #%d at gridId %d\n", i, gridIds[i]);
+		// printf("Particle #%d at gridId %d\n", i, gridIds[i]);
 	}
 
 	__syncthreads();
@@ -83,7 +83,6 @@ void computeLambda(
 	float pho = 0.f, gradj_l2 = 0.f, grad_l2;
 	float3 gradi = make_float3(0, 0, 0), grad, cpos = pos[i];
 
-	int neighbors = 0;
 #ifndef DEBUG_NO_HASH_GRID
 #pragma unroll 3
 	for (int dx = -1; dx <= 1; dx++) {
@@ -96,8 +95,6 @@ void computeLambda(
 				int cellId = cellxyzToId(x, y, z);
 				uint start = cellStarts[cellId], end = cellEnds[cellId];
 
-				neighbors += end - start;
-
 				for (int j = start; j < end; j++) if (j != i) {
 					float3 d = cpos - pos[j];
 					float r2 = d.x * d.x + d.y * d.y + d.z * d.z;
@@ -109,10 +106,6 @@ void computeLambda(
 				}
 			}
 		}
-	}
-
-	if (neighbors <= 2) {
-		printf("Paricle #%d (%f,%f,%f) in grid (%d,%d,%d;%d) has only %d neighbors\n", i, cpos.x, cpos.y, cpos.z, expand(ind), cellxyzToId(expand(ind)), neighbors);
 	}
 
 #else
@@ -167,7 +160,7 @@ void computedpos(
 				for (int j = start; j < end; j++) if (j != i) {
 					float3 p = cpos - pos[j];
 					float corr = coef_corr * powf(h_poly6(h, norm2(p)), n_corr);
-					d += (lambda + lambdas[j] + 0) * h_spikyGrad(h, p);
+					d += (lambda + lambdas[j] + corr) * h_spikyGrad(h, p);
 				}
 			}
 		}
@@ -175,7 +168,8 @@ void computedpos(
 #else
 	for (int j = 0; j < n; j++) if (j != i) {
 		float3 p = pos[i] - pos[j];
-		d += (lambda + lambdas[j]) * h_spikyGrad(h, p);
+		float corr = coef_corr * powf(h_poly6(h, norm2(p)), n_corr);
+		d += (lambda + lambdas[j] + corr) * h_spikyGrad(h, p);
 		if (0 && i == 0) {
 			float3 sgrad = h_spikyGrad(h, p);
 			if (sgrad.x != 0.f)

@@ -3,7 +3,8 @@
 
 #define M_PI 3.14159265359
 #define LIM_EPS 1e-2
-#define KERNAL_EPS 1e-3
+// Should be less than delta_q^2, otherwise tensile corrective force will be inf. 
+#define KERNAL_EPS 1e-4
 const int MAX_PARTICLE_NUM = 120000;
 
 typedef unsigned int uint;
