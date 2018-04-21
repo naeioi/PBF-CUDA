@@ -13,15 +13,17 @@ FluidSystem::FluidSystem()
 		pho0 = 8000.f,
 		lambda_eps = 1000.f,
 		delta_q = 0.3 * h,
-		k_corr = 0.0005f,
-		n_corr = 4;
-	const float3 ulim = make_float3(3.f, 3.f, 5.f), llim = make_float3(-3.f, -3.f, 0.f);
-	const int niter = 1;
+		k_corr = 0.001f,
+		n_corr = 4,
+		k_boundaryDensity = 50.f,
+		c_XSPH = 0.01f;
+	const float3 ulim = make_float3(1.5f, 1.5f, 3.f), llim = make_float3(-1.5f, -1.5f, 0.f);
+	const int niter = 4;
 
-	m_simulator = new Simulator(g, h, dt, pho0, lambda_eps, delta_q, k_corr, n_corr, niter, ulim, llim);
+	m_simulator = new Simulator(g, h, dt, pho0, lambda_eps, delta_q, k_corr, n_corr, k_boundaryDensity, c_XSPH, niter, ulim, llim);
 	m_renderer = new SimpleRenderer(ulim, llim);
 	m_source = new FixedCubeSource(
-		/* limits */  make_float3(.5f, .5f, 3.f), make_float3(-.5f, -.5f, 2.f),
+		/* limits */  make_float3(1.f, 1.f, 2.f), make_float3(-1.f, -1.f, 1.f),
 		/* numbers */ make_int3(20, 20, 10));
 	m_nparticle = 20 * 20 * 10;
 

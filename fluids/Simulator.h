@@ -6,8 +6,8 @@
 class Simulator
 {
 public:
-	Simulator(float gravity, float h, float dt, float pho0, float lambda_eps, float delta_q, float k_corr, int n_corr, uint niter, float3 ulim, float3 llim) 
-		: m_gravity(gravity), m_h(h), m_dt(dt), m_pho0(pho0), m_lambda_eps(lambda_eps), m_delta_q(delta_q), m_k_corr(k_corr), m_n_corr(n_corr)
+	Simulator(float gravity, float h, float dt, float pho0, float lambda_eps, float delta_q, float k_corr, float n_corr, float k_boundaryDensity, float c_XSPH, uint niter, float3 ulim, float3 llim) 
+		: m_gravity(gravity), m_h(h), m_dt(dt), m_pho0(pho0), m_lambda_eps(lambda_eps), m_delta_q(delta_q), m_k_corr(k_corr), m_n_corr(n_corr), m_k_boundaryDensity(k_boundaryDensity), m_c_XSPH(c_XSPH)
 		, m_niter(niter), m_ulim(ulim), m_llim(llim) {
 
 		checkCudaErrors(cudaMalloc(&dc_gridId, sizeof(uint) * MAX_PARTICLE_NUM));
@@ -36,8 +36,8 @@ private:
 	void advect();
 	void buildGridHash();
 	void correctDensity();
-	void updateVelocity();
 	void correctVelocity();
+	void updateVelocity();
 
 	float3 *dc_pos, *dc_npos, *dc_vel, *dc_nvel;
 	uint *dc_iid, *dc_niid;
@@ -45,7 +45,7 @@ private:
 	float* dc_lambda, *dc_gradl2;
 	float3 *dc_dpos;
 
-	float m_gravity, m_h, m_dt, m_pho0, m_lambda_eps, m_delta_q, m_k_corr, m_n_corr;
+	float m_gravity, m_h, m_dt, m_pho0, m_lambda_eps, m_delta_q, m_k_corr, m_n_corr, m_k_boundaryDensity, m_c_XSPH;
 	float m_coef_corr;
 	int m_niter;
 	int m_nparticle;

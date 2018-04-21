@@ -19,7 +19,7 @@ inline float norm2(float3 u) { return u.x * u.x + u.y * u.y + u.z * u.z; }
 
 __host__ __device__
 inline float3 clamp3f(float3 u, float3 llim, float3 ulim) {
-	return make_float3(max(min(u.x, ulim.x), llim.x), max(min(u.y, ulim.y), llim.y), max(min(u.z, ulim.z), llim.z));
+	return make_float3(fmaxf(fminf(u.x, ulim.x), llim.x), fmaxf(fminf(u.y, ulim.y), llim.y), fmaxf(fminf(u.z, ulim.z), llim.z));
 }
 
 __host__ __device__

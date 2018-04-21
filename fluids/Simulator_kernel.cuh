@@ -3,13 +3,13 @@
 namespace cg = cooperative_groups;
 
 __global__ void advect_kernel(
-	float3 *pos, float3 *npos, float3 *vel, float3 *nvel, 
+	float3 *pos, float3 *npos, float3 *vel,
 	int nparticle, float dt, float3 g,
 	float3 ulim, float3 llim) {
 	int i = __mul24(blockIdx.x, blockDim.x) + threadIdx.x;
 	if (i < nparticle) {
-		nvel[i] = vel[i] + dt * g;
-		npos[i] = pos[i] + dt * nvel[i];
+		vel[i] += dt * g;
+		npos[i] = pos[i] + dt * vel[i];
 	}
 }
 
@@ -69,8 +69,8 @@ void computeLambda(
 	float* lambdas, /*float* grads_l2,*/
 	uint* cellIds, uint* cellStarts, uint* cellEnds,
 	int3 cellDim,
-	float3* pos, int n, float pho0, float lambda_eps,
-	/* Func1 poly6, Func2 spikyGrad, */ float h,
+	float3* pos, int n, float pho0, float lambda_eps, float k_boundaryDensity,
+	float h,
 	Func1 posToCellxyz, Func2 cellxyzToId, Func3 boundaryDensity) {
 	
 	int i = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
@@ -121,12 +121,12 @@ void computeLambda(
 	}
 #endif
 
-	pho += boundaryDensity(cpos);
+	pho += k_boundaryDensity * boundaryDensity(cpos);
 
 	grad_l2 = gradj_l2 + gradi.x * gradi.x + gradi.y * gradi.y + gradi.z * gradi.z;	
 	lambdas[i] = -(pho / pho0 - 1) / (grad_l2 + lambda_eps);
 
-	// if (i == 0) printf("lambdas[0]=%f\n", lambdas[i]);
+	if (i == 0) printf("lambdas[0]=%f\n", lambdas[i]);
 }
 
 template <typename Func1, typename Func2>
@@ -136,7 +136,7 @@ void computedpos(
 	uint* cellIds, uint* cellStarts, uint* cellEnds,
 	int3 cellDim,
 	float3* pos, float3* dpos, int n, 
-	float pho0, float h, float coef_corr, float n_corr,
+	float pho0, float h, float coef_corr, float n_corr, 
 	Func1 posToCellxyz, Func2 cellxyzToId, float3 ulim, float3 llim) {
 
 	int i = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
@@ -162,6 +162,10 @@ void computedpos(
 					float3 p = cpos - pos[j];
 					float corr = coef_corr * powf(h_poly6(h, norm2(p)), n_corr);
 					d += (lambda + lambdas[j] + corr) * h_spikyGrad(h, p);
+
+					if (0 && i == 0) {
+						printf("Particle #%d(%f,%f,%f) is #0's neighbor\n", j, expand(pos[j]));
+					}
 				}
 			}
 		}
@@ -180,13 +184,53 @@ void computedpos(
 #endif
 
 	// dpos[i] = d / pho0;
-	cpos += clamp3f(d / pho0, -MAX_DP, MAX_DP);
+	
+	d = clamp3f(d / pho0, -MAX_DP, MAX_DP);
+
+	cpos += d;
+
 	cpos.x = max(min(cpos.x, ulim.x), llim.x);
 	cpos.y = max(min(cpos.y, ulim.y), llim.y);
 	cpos.z = max(min(cpos.z, ulim.z), llim.z);
 	pos[i] = cpos;
 
-	if (i == 0) {
+	if (0 && i == 0) {
 		printf("npos[0]=(%f,%f,%f)\n", pos[0].x, pos[0].y, pos[0].z);
 	}
+}
+
+template <typename Func1, typename Func2>
+__global__
+void computeXSPH(
+	uint* cellStarts, uint* cellEnds, int3 cellDim,
+	float3* pos, float3* vel, float3* nvel, int n,
+	float c_XSPH, float h,
+	Func1 grid_pos2xyz, Func2 grid_xyz2id) {
+
+	int i = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
+
+	if (i >= n) return;
+
+	float3 cpos = pos[i], cvel = vel[i], avel = make_float3(0.f, 0.f, 0.f);
+	int3 xyz = grid_pos2xyz(cpos);
+
+	for (int dx = -1; dx <= 1; dx++) {
+		int x = xyz.x + dx;
+		for (int dy = -1; dy <= 1; dy++) {
+			int y = xyz.y + dy;
+			for (int dz = -1; dz <= 1; dz++) {
+				int z = xyz.z + dz;
+				if (x < 0 || x >= cellDim.x || y < 0 || y >= cellDim.y || z < 0 || z >= cellDim.z) continue;
+
+				int ncell = grid_xyz2id(x, y, z);
+				for (int j = cellStarts[ncell]; j < cellEnds[ncell]; j++) {
+					float3 dp = cpos - pos[j];
+					float3 vp = cvel - vel[j];
+					avel += vp * h_poly6(h, norm2(dp));
+				}
+			}
+		}
+	}
+
+	nvel[i] = vel[i] + c_XSPH * avel;
 }

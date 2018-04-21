@@ -58,7 +58,7 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 
 	/* update Velocity */
 	updateVelocity();
-	// correctVelocity();
+	correctVelocity();
 
 	cudaDeviceSynchronize();
 	//exit(0);
@@ -81,9 +81,4 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 	checkCudaErrors(cudaGraphicsUnregisterResource(dcr_npos));
 	checkCudaErrors(cudaGraphicsUnregisterResource(dcr_nvel));
 	checkCudaErrors(cudaGraphicsUnregisterResource(dcr_niid));
-}
-
-void Simulator::correctVelocity()
-{
-	/* TODO: defer until particle renderer is implemented */
 }
