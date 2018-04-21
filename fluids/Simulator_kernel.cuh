@@ -179,7 +179,7 @@ void computedpos(
 #endif
 
 	// dpos[i] = d / pho0;
-	cpos += d / pho0;
+	cpos += clamp3f(d / pho0, -MAX_DP, MAX_DP);
 	cpos.x = max(min(cpos.x, ulim.x), llim.x);
 	cpos.y = max(min(cpos.y, ulim.y), llim.y);
 	cpos.z = max(min(cpos.z, ulim.z), llim.z);
