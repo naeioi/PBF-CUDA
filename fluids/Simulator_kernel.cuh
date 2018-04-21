@@ -63,7 +63,7 @@ float3 h_spikyGrad(float h, float3 r) {
 
 #define expand(p) p.x, p.y, p.z
 
-template </* typename Func1, typename Func2, */ typename Func3, typename Func4>
+template <typename Func1, typename Func2, typename Func3>
 __global__
 void computeLambda(
 	float* lambdas, /*float* grads_l2,*/
@@ -71,7 +71,7 @@ void computeLambda(
 	int3 cellDim,
 	float3* pos, int n, float pho0, float lambda_eps,
 	/* Func1 poly6, Func2 spikyGrad, */ float h,
-	Func3 posToCellxyz, Func4 cellxyzToId) {
+	Func1 posToCellxyz, Func2 cellxyzToId, Func3 boundaryDensity) {
 	
 	int i = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
 	
@@ -120,6 +120,8 @@ void computeLambda(
 		gradj_l2 += grad.x * grad.x + grad.y * grad.y + grad.z * grad.z;
 	}
 #endif
+
+	pho += boundaryDensity(cpos);
 
 	grad_l2 = gradj_l2 + gradi.x * gradi.x + gradi.y * gradi.y + gradi.z * gradi.z;	
 	lambdas[i] = -(pho / pho0 - 1) / (grad_l2 + lambda_eps);

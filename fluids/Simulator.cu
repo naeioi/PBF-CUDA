@@ -145,6 +145,30 @@ struct h_updateVelocity {
 	}
 };
 
+struct DensityBoundary {
+	float3 ulim, llim;
+	float h;
+	DensityBoundary(float3 &ulim, float3 &llim, float h) : ulim(ulim), llim(llim), h(h) {}
+
+	__device__
+	float densityAt(float d) {
+		if (d > h) return 0.f;
+		if (d <= 0.f) return 2 * M_PI / 3;
+		return (2 * M_PI / 3) * (h - d) * (h - d) * (h + d);
+	}
+
+	__device__
+	float operator()(float3 p) {
+		return
+			densityAt(ulim.x - p.x) +
+			densityAt(p.x - llim.x) +
+			densityAt(ulim.y - p.y) +
+			densityAt(p.y - llim.y) +
+			densityAt(ulim.z - p.z) +
+			densityAt(p.z - llim.z);
+	}
+};
+
 /* Intermedia steps */
 
 void Simulator::advect()
@@ -209,7 +233,7 @@ void Simulator::correctDensity()
 		m_gridHashDim,
 		dc_npos, m_nparticle, m_pho0, m_lambda_eps,
 		/* getPoly6(m_h), getSpikyGrad(m_h), */ m_h,
-		getGridxyz(m_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim));
+		getGridxyz(m_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim), DensityBoundary(m_ulim, m_llim, m_h));
 
 	// cudaDeviceSynchronize();
 	// getLastCudaError("Kernel execution failed: computeLambda");
