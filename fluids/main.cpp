@@ -1,4 +1,5 @@
 #include "FluidSystem.h"
+#include <conio.h>
 
 extern bool move;
 
@@ -8,11 +9,11 @@ int main() {
 	fluids.initSource();
 
 	while (1) {
-		// fluids.stepSource();
+		fluids.render();
+		// getch();
 		if (1) {
 			fluids.stepSimulate();
 			move = false;
 		}
-		fluids.render();
 	}
 }

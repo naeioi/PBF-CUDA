@@ -11,7 +11,7 @@ Camera::Camera()
 
 Camera::Camera(const glm::vec3 & pos, float aspect)
 {
-	glm::vec3 front(glm::vec3(0.f, 0.f, 0.5f) - pos), up = glm::vec3(0.f, 0.f, 1.f);
+	glm::vec3 front(glm::vec3(0.f, 0.f, 2.f) - pos), up = glm::vec3(0.f, 0.f, 1.f);
 	up = glm::cross(front, glm::cross(up, front));
 	*this = Camera(pos, front, up, 60.f, aspect);
 }

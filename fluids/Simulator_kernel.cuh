@@ -99,7 +99,6 @@ void computeLambda(
 					float3 d = cpos - pos[j];
 					float r2 = d.x * d.x + d.y * d.y + d.z * d.z;
 					pho += h_poly6(h, r2);
-					/* TODO: call to spikyGrad will crash the kernel */
 					grad = h_spikyGrad(h, d) / pho0;
 					gradi += grad;
 					gradj_l2 += grad.x * grad.x + grad.y * grad.y + grad.z * grad.z;

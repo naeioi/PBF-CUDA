@@ -36,7 +36,7 @@ void SimpleRenderer::init() {
 	__binding();
 
 	/* Resource allocation in constructor */
-	glm::vec3 pos(0.2f, -1.5f, 0.8f);
+	glm::vec3 pos(1.f, -9.f, 4.f);
 	float aspect = (float)WINDOW_WIDTH / WINDOW_HEIGHT;
 
 	m_camera = new Camera(pos, aspect);

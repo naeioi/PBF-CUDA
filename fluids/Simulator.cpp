@@ -41,9 +41,19 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 	static int round = 0;
 	fprintf(stderr, "-- Round %d --\n", round++);
 	advect();
+	
+	cudaDeviceSynchronize();
+	printf("advect() done.\n");
+
 	buildGridHash();
+
+	cudaDeviceSynchronize();
+	printf("buildGridHash() done.\n");
+
 	for (uint i = 0; i < m_niter; i++) {
 		correctDensity();
+		cudaDeviceSynchronize();
+		printf("correctDensity() done.\n");
 	}
 
 	/* update Velocity */
