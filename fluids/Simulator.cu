@@ -38,9 +38,9 @@ struct getExtrema {
 struct getGridxyz {
 	float3 llim;
 	float h;
-	uint3 gridDim;
+	int3 gridDim;
 	__host__ __device__
-	getGridxyz(const float3 &llim, const uint3 &gridDim, float h) : llim(llim), gridDim(gridDim), h(2.f*h) {}
+	getGridxyz(const float3 &llim, const int3 &gridDim, float h) : llim(llim), gridDim(gridDim), h(2.f * h) {}
 
 	__device__
 	int3 operator()(float3 pos) {
@@ -51,18 +51,18 @@ struct getGridxyz {
 };
 
 struct xyzToId {
-	uint3 gridDim;
+	int3 gridDim;
 	__host__ __device__
-	xyzToId(const uint3 &gridDim) : gridDim(gridDim) {}
+	xyzToId(const int3 &gridDim) : gridDim(gridDim) {}
 
 	template <typename T> __device__
 	int operator()(T x, T y, T z) {
 		/*if (x < 0 || x >= gridDim.x || y < 0 || y >= gridDim.y || z < 0 || z >= gridDim.z)
 			return -1;*/
 		/* TODO */
-		x = x & 15;
+		/*x = x & 15;
 		y = y & 15;
-		z = z & 15;
+		z = z & 15;*/
 		return x * gridDim.y * gridDim.z + y * gridDim.z + z;
 	}
 };
@@ -71,16 +71,18 @@ struct getGridId {
 
 	float3 llim;
 	float h;
-	uint3 gridDim;
+	int3 gridDim;
 	__host__ __device__
-	getGridId(const float3 &llim, const uint3 &gridDim, float h) : llim(llim), gridDim(gridDim), h(2.f*h) {}
+	getGridId(const float3 &llim, const int3 &gridDim, float h) : llim(llim), gridDim(gridDim), h(2.f * h) {}
 
 	template <typename T> __device__
-		uint operator()(T pos) {
+	int operator()(T pos) {
 		float3 diff = pos - llim;
-		// printf("(%f,%f,%f)\n", diff.x, diff.y, diff.z);
 		int x = diff.x / h, y = diff.y / h, z = diff.z / h;
-		return (uint)(x * gridDim.y * gridDim.z + y * gridDim.z + z);
+		x = min(max(x, 0), gridDim.x);
+		y = min(max(y, 0), gridDim.y);
+		z = min(max(z, 0), gridDim.z);
+		return (int)(x * gridDim.y * gridDim.z + y * gridDim.z + z);
 	}
 };
 
@@ -148,11 +150,6 @@ struct h_updateVelocity {
 
 void Simulator::advect()
 {
-	/* Input:  dc_pos,  dc_vel,  dc_iid
-	 * Output: dc_npos, dc_nvel, dc_niid
-	 */
-
-	/* TODO: 1. try different block_size. 2. try cudaOccupancyMaxPotentialBlockSize() */
 	int block_size = 256;
 	int grid_size = ceilDiv(m_nparticle, block_size);
 
@@ -161,29 +158,10 @@ void Simulator::advect()
 		dc_vel, dc_nvel, 
 		m_nparticle, m_dt, make_float3(0, 0, -m_gravity),
 		m_ulim, m_llim);
-
-	/* find real limits after advection */
-	auto t = thrust::transform_reduce(
-		thrust::device_ptr<float3>(dc_npos), thrust::device_ptr<float3>(dc_npos + m_nparticle),
-		helper_duplicate(),
-		thrust::make_tuple(m_ulim, m_llim),
-		getExtrema());
-
-	 m_real_ulim = thrust::get<0>(t) + m_h * LIM_EPS;
-	 m_real_llim = thrust::get<1>(t) - m_h * LIM_EPS;
-	 // fprintf(stderr, "m_real_ulim(%f,%f,%f)\n", m_real_ulim.x, m_real_ulim.y, m_real_ulim.z);
-	 // fprintf(stderr, "m_real_llim(%f,%f,%f)\n", m_real_llim.x, m_real_llim.y, m_real_llim.z);
 }
 
 void Simulator::buildGridHash()
 {
-	/* Input:  dc_npos, dc_nvel, dc_niid
-	 * Output: dc_npos, dc_nvel, dc_niid. Sorted by GridId(dc_npos)
-	 *         dc_gridStart, dc_gridEnd.  In start closed end open range.
-	 * Intermedia:
-	 *         dc_gridId
-	 */
-
 	int block_size = 256;
 	int grid_size = ceilDiv(m_nparticle, block_size);
 	int smem = sizeof(uint) * (block_size + 2);
@@ -191,25 +169,20 @@ void Simulator::buildGridHash()
 	thrust::device_ptr<float3> d_pos(dc_pos), d_vel(dc_vel), d_npos(dc_npos), d_nvel(dc_nvel);
 	thrust::device_ptr<uint> d_gridId(dc_gridId);
 
-	/* Compute real_ulim and real_llim */
-	computeGridHashDim();
+	float3 diff = m_ulim - m_llim;
+	m_gridHashDim = make_int3((int)ceilf(.5f * diff.x / m_h), (int)ceilf(.5f * diff.y / m_h), (int)ceilf(.5f * diff.z / m_h));
 	/* Compute gridId for each particle */
 	thrust::transform(
 		d_npos, d_npos + m_nparticle,
 		d_gridId,
-		getGridId(m_real_llim, m_gridHashDim, m_h));
+		getGridId(m_llim, m_gridHashDim, m_h));
 
 	/* sort (gridId, pos, vel) by gridId */
 	thrust::sort_by_key(
 		d_gridId, d_gridId + m_nparticle,
 		thrust::make_zip_iterator(thrust::make_tuple(d_pos, d_vel, d_npos, d_nvel)));
 
-	// cudaDeviceSynchronize();
-	// getLastCudaError("Kernel execution failed: before computeGridRange");
-
 	/* Compute [gradStart, gradEnd) */
-	// int *counter;
-	// cudaMallocManaged(&counter, sizeof(counter));
 	computeGridRange<<<grid_size, block_size, smem>>>(dc_gridId, dc_gridStart, dc_gridEnd, m_nparticle);
 
 	// cudaDeviceSynchronize();
@@ -217,14 +190,6 @@ void Simulator::buildGridHash()
 
 	/*printf("Counter=%d\n", *counter); 
 	exit(0);*/
-}
-
-void Simulator::computeGridHashDim() {
-	/* Input: m_real_ulim, m_real_llim,
-	 * Output: m_gridHashDim
-	 */
-	float3 diff = m_real_ulim - m_real_llim;
-	m_gridHashDim = make_uint3((uint)ceilf(diff.x / m_h), (uint)ceilf(diff.y / m_h), (uint)ceilf(diff.z / m_h));
 }
 
 void Simulator::correctDensity() 
@@ -245,27 +210,21 @@ void Simulator::correctDensity()
 		m_gridHashDim,
 		dc_npos, m_nparticle, m_pho0, m_lambda_eps,
 		/* getPoly6(m_h), getSpikyGrad(m_h), */ m_h,
-		getGridxyz(m_real_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim));
+		getGridxyz(m_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim));
 
 	// cudaDeviceSynchronize();
 	// getLastCudaError("Kernel execution failed: computeLambda");
+
+	m_coef_corr = -m_k_corr / powf(h_poly6(m_delta_q, m_h), m_n_corr);
 
 	computedpos<<<grid_size, block_size>>>(
-		dc_lambda, /*dc_gradl2,*/
+		dc_lambda, 
 		dc_gridId, dc_gridStart, dc_gridEnd,
 		m_gridHashDim,
-		dc_npos, dc_dpos, m_nparticle, m_pho0, m_h,
-		getGridxyz(m_real_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim));
+		dc_npos, dc_dpos, m_nparticle, m_pho0, m_h, m_coef_corr, m_n_corr,
+		getGridxyz(m_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim),
+		m_ulim, m_llim);
 
-	/* update position */
-	thrust::device_ptr<float3> d_npos(dc_npos), d_dpos(dc_dpos);
-	thrust::transform(
-		thrust::make_zip_iterator(thrust::make_tuple(d_npos, d_dpos)),
-		thrust::make_zip_iterator(thrust::make_tuple(d_npos+m_nparticle, d_dpos+m_nparticle)),
-		d_npos, h_updatePosition(m_ulim, m_llim));
-
-	// cudaDeviceSynchronize();
-	// getLastCudaError("Kernel execution failed: computeLambda");
 }
 
 void Simulator::updateVelocity() {

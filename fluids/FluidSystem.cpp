@@ -10,17 +10,20 @@ FluidSystem::FluidSystem()
 		g = 9.8f,
 		h = .1f,
 		dt = 0.0083f,
-		pho0 = 6378.f,
-		lambda_eps = 600.f;
+		pho0 = 7000.f,
+		lambda_eps = 900.f,
+		delta_q = 0.3 * h,
+		k_corr = 0,
+		n_corr = 4;
 	const float3 ulim = make_float3(.5f, .5f, 1.f), llim = make_float3(-.5f, -.5f, 0.f);
 	const int niter = 1;
 
-	m_simulator = new Simulator(g, h, dt, pho0, lambda_eps, niter, ulim, llim);
+	m_simulator = new Simulator(g, h, dt, pho0, lambda_eps, delta_q, k_corr, n_corr, niter, ulim, llim);
 	m_renderer = new SimpleRenderer(ulim, llim);
 	m_source = new FixedCubeSource(
-		/* limits */  make_float3(-.5f, .5f, 1.f), make_float3(-.5f+.25f, .5f-.25f, 1.f-.25f), 
-		/* numbers */ make_int3(40, 40, 40));
-	m_nparticle = 40 * 40 * 40;
+		/* limits */  make_float3(.25f, .25f, 0.3f), make_float3(-.25f, -.25f, 0.f),
+		/* numbers */ make_int3(20, 20, 1));
+	m_nparticle = 20 * 20 * 1;
 
 	/* Initialize vertex buffer */
 	glGenBuffers(1, &d_pos);

@@ -1,13 +1,15 @@
 #pragma once
 #include "helper.h"
+#include <math.h>
 #include <helper_cuda.h>
 
 class Simulator
 {
 public:
-	Simulator(float gravity, float h, float dt, float pho0, float lambda_eps, uint niter, float3 ulim, float3 llim) 
-		: m_gravity(gravity), m_h(h), m_dt(dt), m_pho0(pho0), m_lambda_eps(lambda_eps)
+	Simulator(float gravity, float h, float dt, float pho0, float lambda_eps, float delta_q, float k_corr, int n_corr, uint niter, float3 ulim, float3 llim) 
+		: m_gravity(gravity), m_h(h), m_dt(dt), m_pho0(pho0), m_lambda_eps(lambda_eps), m_delta_q(delta_q), m_k_corr(k_corr), m_n_corr(n_corr)
 		, m_niter(niter), m_ulim(ulim), m_llim(llim) {
+
 		checkCudaErrors(cudaMalloc(&dc_gridId, sizeof(uint) * MAX_PARTICLE_NUM));
 		checkCudaErrors(cudaMalloc(&dc_gridStart, sizeof(uint) * MAX_PARTICLE_NUM));
 		checkCudaErrors(cudaMalloc(&dc_gridEnd, sizeof(uint) * MAX_PARTICLE_NUM));
@@ -33,7 +35,6 @@ public:
 private:
 	void advect();
 	void buildGridHash();
-	void computeGridHashDim();
 	void correctDensity();
 	void updateVelocity();
 	void correctVelocity();
@@ -44,11 +45,11 @@ private:
 	float* dc_lambda, *dc_gradl2;
 	float3 *dc_dpos;
 
-	float m_gravity, m_h, m_dt, m_pho0, m_lambda_eps;
-	uint m_niter;
+	float m_gravity, m_h, m_dt, m_pho0, m_lambda_eps, m_delta_q, m_k_corr, m_n_corr;
+	float m_coef_corr;
+	int m_niter;
 	int m_nparticle;
 	float3 m_ulim, m_llim;
-	float3 m_real_ulim, m_real_llim;
-	uint3 m_gridHashDim;
+	int3 m_gridHashDim;
 };
 

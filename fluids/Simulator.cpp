@@ -43,12 +43,11 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 	advect();
 	buildGridHash();
 	for (uint i = 0; i < m_niter; i++) {
-		/* Warn: should be aware that correctDensity() assumes dc_pos as source and dc_npos as destination.
-		 * Thus better maintains an even m_niter, otherwise especial care to swap dc_npos to dc_pos should be taken, 
-		 * which is potentially expensive in terms of performance. 
-		 */
 		correctDensity();
 	}
+
+	cudaDeviceSynchronize();
+	exit(0);
 
 	/* update Velocity */
 	updateVelocity();
