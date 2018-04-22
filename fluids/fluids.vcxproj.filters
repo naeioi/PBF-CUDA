@@ -20,8 +20,98 @@
     <ClCompile Include="FixedCubeSource.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="helper.cpp" />
-    <ClCompile Include="..\common\src\glad.c" />
     <ClCompile Include="Input.cpp" />
+    <ClCompile Include="..\common\src\glad.c" />
+    <ClCompile Include="..\common\nanogui\src\button.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\checkbox.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\colorpicker.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\colorwheel.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\combobox.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\common.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\glcanvas.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\glutil.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\graph.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\imagepanel.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\imageview.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\label.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\layout.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\messagedialog.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\popup.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\popupbutton.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\progressbar.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\screen.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\serializer.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\slider.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\stackedwidget.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\tabheader.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\tabwidget.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\textbox.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\theme.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\vscrollpanel.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\widget.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\window.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanogui\src\nanogui_resources.cpp">
+      <Filter>nanogui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\nanovg\src\nanovg.c">
+      <Filter>nanovg</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FluidSystem.h" />
@@ -36,10 +126,34 @@
     <ClInclude Include="SimpleRenderer.h" />
     <ClInclude Include="FixedCubeSource.h" />
     <ClInclude Include="Input.h" />
+    <ClInclude Include="..\common\nanovg\src\fontstash.h">
+      <Filter>nanovg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\nanovg\src\nanovg.h">
+      <Filter>nanovg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\nanovg\src\nanovg_gl.h">
+      <Filter>nanovg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\nanovg\src\nanovg_gl_utils.h">
+      <Filter>nanovg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\nanovg\src\stb_image.h">
+      <Filter>nanovg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\nanovg\src\stb_truetype.h">
+      <Filter>nanovg</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shaders">
       <UniqueIdentifier>{f576ef95-6f0f-44d7-a713-2d3743ec4d7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="nanogui">
+      <UniqueIdentifier>{29c1ad58-fd92-4071-8232-fe312089a233}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="nanovg">
+      <UniqueIdentifier>{2a166ad6-6e15-4d0a-b618-fb5c5d774f85}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

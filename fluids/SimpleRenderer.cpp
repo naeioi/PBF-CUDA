@@ -2,9 +2,12 @@
 #include "Input.h"
 
 #include <cstdlib>
+
 #include <GLFW\glfw3.h>
+#include <nanogui\nanogui.h>
 #include <glm/common.hpp>
 #include <glm/gtx/rotate_vector.hpp>
+
 
 void SimpleRenderer::init() {
 
@@ -12,9 +15,20 @@ void SimpleRenderer::init() {
 	m_height = WINDOW_HEIGHT;
 
 	glfwInit();
+	glfwSetTime(0);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	glfwWindowHint(GLFW_SAMPLES, 0);
+	glfwWindowHint(GLFW_RED_BITS, 8);
+	glfwWindowHint(GLFW_GREEN_BITS, 8);
+	glfwWindowHint(GLFW_BLUE_BITS, 8);
+	glfwWindowHint(GLFW_ALPHA_BITS, 8);
+	glfwWindowHint(GLFW_STENCIL_BITS, 8);
+	glfwWindowHint(GLFW_DEPTH_BITS, 24);
+	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
 	m_input = new Input();
 	m_window = glfwCreateWindow(m_width, m_height, "Fluid", nullptr, nullptr);
@@ -30,13 +44,34 @@ void SimpleRenderer::init() {
 		fexit(-1);
 	}
 
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+		throw std::runtime_error("Could not initialize GLAD!");
+	glGetError();
+
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 	glEnable(GL_DEPTH_TEST);
+
+	/* Init nanogui */
+	m_gui_screen = new nanogui::Screen();
+	m_gui_screen->initialize(m_window, true);
+
+	int width_, height_;
+	glfwGetFramebufferSize(m_window, &width_, &height_);
+	glViewport(0, 0, width_, height_);
+	glfwSwapInterval(0);
+	glfwSwapBuffers(m_window);
+
+	m_gui_form = new nanogui::FormHelper(m_gui_screen);
+	nanogui::ref<nanogui::Window> nanoWin = m_gui_form->addWindow(Eigen::Vector2i(10, 10), "Tester");
+	m_gui_form->addVariable("double", m_dvar)->setSpinnable(true);
+	m_gui_screen->setVisible(true);
+	m_gui_screen->performLayout();
+	nanoWin->center();
 
 	__binding();
 
 	/* Resource allocation in constructor */
-	glm::vec3 pos(1.f, -9.f, 4.f);
+	glm::vec3 pos(1.f, -5.f, 2.f);
 	float aspect = (float)WINDOW_WIDTH / WINDOW_HEIGHT;
 
 	m_camera = new Camera(pos, aspect);
@@ -62,6 +97,8 @@ void SimpleRenderer::__window_size_callback(GLFWwindow* window, int width, int h
 }
 
 void SimpleRenderer::__mouse_button_callback(GLFWwindow *w, int button, int action, int mods) {
+	//m_gui_screen->mouseButtonCallbackEvent(button, action, mods);
+
 	Input::Pressed updown = action == GLFW_PRESS ? Input::DOWN : Input::UP;
 	if (button == GLFW_MOUSE_BUTTON_LEFT)
 		m_input->left_mouse = updown;
@@ -72,6 +109,8 @@ void SimpleRenderer::__mouse_button_callback(GLFWwindow *w, int button, int acti
 }
 
 void SimpleRenderer::__mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
+	//m_gui_screen->cursorPosCallbackEvent(xpos, ypos);
+
 	m_input->updateMousePos(glm::vec2(xpos, ypos));
 
 	/* -- Camera control -- */
@@ -122,6 +161,7 @@ void SimpleRenderer::__binding() {
 	glfwSetScrollCallback(m_window, [](GLFWwindow *w, double dx, double dy) {
 		((SimpleRenderer*)(glfwGetWindowUserPointer(w)))->__mouse_scroll_callback(w, dx, dy);
 	});
+
 }
 
 bool move = false;
@@ -199,16 +239,12 @@ void SimpleRenderer::render(uint pos, int nparticle) {
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(lines), lines);
 
 	if (!glfwWindowShouldClose(m_window)) {
+		glfwPollEvents();
 		__processInput();
 		__render();
+		m_gui_screen->drawContents();
+		m_gui_screen->drawWidgets();
 		glfwSwapBuffers(m_window);
-		// ctx.syncService.newFrame();
-		/*if (ctx.lockFPS > 0) {
-			float sleepTime = 1000.f * (1.f / ctx.lockFPS - ctx.syncService.frameTime());
-			if (sleepTime < 0) sleepTime = 0;
-			Sleep(sleepTime);
-		}*/
-		glfwPollEvents();
 	}
 	else fexit(0);
 }

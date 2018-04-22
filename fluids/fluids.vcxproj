@@ -43,11 +43,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\common\cuda_inc;$(SolutionDir)\common\includes;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\common\includes\nanogui-includes;$(SolutionDir)\common\cuda_inc;$(SolutionDir)\common\includes;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\common\libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)\common\cuda_inc;$(SolutionDir)\common\includes;</IncludePath>
+    <IncludePath>C:\Users\naeio\Documents\prog\graphics\fluid\code\fluids\common\nanogui\ext-includes;C:\Users\naeio\Documents\prog\graphics\fluid\code\fluids\common\nanogui\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)\common\cuda_inc;$(SolutionDir)\common\includes</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;$(SolutionDir)\common\libs;</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -61,7 +61,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>glad.lib;cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;glfw3.lib;opengl32.lib;stb.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glad.lib;cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;nanogui.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;glfw3.lib;opengl32.lib;stb.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
@@ -83,14 +83,14 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);GLFW_INCLUDE_NONE;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);GLFW_INCLUDE_NONE;NANOGUI_GLAD</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;glfw3.lib;opengl32.lib;stb.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glad.lib;cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;glfw3.lib;opengl32.lib;stb.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
@@ -107,6 +107,12 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <CudaCompile Include="Simulator.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\nanovg\src\fontstash.h" />
+    <ClInclude Include="..\common\nanovg\src\nanovg.h" />
+    <ClInclude Include="..\common\nanovg\src\nanovg_gl.h" />
+    <ClInclude Include="..\common\nanovg\src\nanovg_gl_utils.h" />
+    <ClInclude Include="..\common\nanovg\src\stb_image.h" />
+    <ClInclude Include="..\common\nanovg\src\stb_truetype.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="FixedCubeSource.h" />
     <ClInclude Include="FluidSystem.h" />
@@ -123,6 +129,36 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\nanogui\src\button.cpp" />
+    <ClCompile Include="..\common\nanogui\src\checkbox.cpp" />
+    <ClCompile Include="..\common\nanogui\src\colorpicker.cpp" />
+    <ClCompile Include="..\common\nanogui\src\colorwheel.cpp" />
+    <ClCompile Include="..\common\nanogui\src\combobox.cpp" />
+    <ClCompile Include="..\common\nanogui\src\common.cpp" />
+    <ClCompile Include="..\common\nanogui\src\glcanvas.cpp" />
+    <ClCompile Include="..\common\nanogui\src\glutil.cpp" />
+    <ClCompile Include="..\common\nanogui\src\graph.cpp" />
+    <ClCompile Include="..\common\nanogui\src\imagepanel.cpp" />
+    <ClCompile Include="..\common\nanogui\src\imageview.cpp" />
+    <ClCompile Include="..\common\nanogui\src\label.cpp" />
+    <ClCompile Include="..\common\nanogui\src\layout.cpp" />
+    <ClCompile Include="..\common\nanogui\src\messagedialog.cpp" />
+    <ClCompile Include="..\common\nanogui\src\nanogui_resources.cpp" />
+    <ClCompile Include="..\common\nanogui\src\popup.cpp" />
+    <ClCompile Include="..\common\nanogui\src\popupbutton.cpp" />
+    <ClCompile Include="..\common\nanogui\src\progressbar.cpp" />
+    <ClCompile Include="..\common\nanogui\src\screen.cpp" />
+    <ClCompile Include="..\common\nanogui\src\serializer.cpp" />
+    <ClCompile Include="..\common\nanogui\src\slider.cpp" />
+    <ClCompile Include="..\common\nanogui\src\stackedwidget.cpp" />
+    <ClCompile Include="..\common\nanogui\src\tabheader.cpp" />
+    <ClCompile Include="..\common\nanogui\src\tabwidget.cpp" />
+    <ClCompile Include="..\common\nanogui\src\textbox.cpp" />
+    <ClCompile Include="..\common\nanogui\src\theme.cpp" />
+    <ClCompile Include="..\common\nanogui\src\vscrollpanel.cpp" />
+    <ClCompile Include="..\common\nanogui\src\widget.cpp" />
+    <ClCompile Include="..\common\nanogui\src\window.cpp" />
+    <ClCompile Include="..\common\nanovg\src\nanovg.c" />
     <ClCompile Include="..\common\src\glad.c" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="FixedCubeSource.cpp" />

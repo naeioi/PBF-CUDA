@@ -5,6 +5,7 @@
 #include "Input.h"
 
 #include <GLFW\glfw3.h>
+#include <nanogui\nanogui.h>
 
 class SimpleRenderer :
 	public Renderer
@@ -43,5 +44,11 @@ private:
 
 	GLFWwindow *m_window;
 	Input *m_input;
+
+	/* NanoGUI */
+	nanogui::Screen *m_gui_screen;
+	nanogui::FormHelper *m_gui_form;
+	
+	double m_dvar = 1.23456;
 };
 
