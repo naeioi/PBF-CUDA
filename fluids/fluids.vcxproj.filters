@@ -144,6 +144,7 @@
     <ClInclude Include="..\common\nanovg\src\stb_truetype.h">
       <Filter>nanovg</Filter>
     </ClInclude>
+    <ClInclude Include="FluidParams.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shaders">

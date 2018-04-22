@@ -1,4 +1,5 @@
 #pragma once
+#include "FluidParams.h"
 #include <glm/glm.hpp>
 
 struct Input {
@@ -14,6 +15,10 @@ struct Input {
 	Pressed left_mouse, right_mouse, mid_mouse;
 	glm::vec2 last_mouse, mouse;
 	bool last_mouse_valid;
+	bool running;
+
+	/* Simulation parameters */
+	FluidParams fluidParams;
 
 	glm::vec2 updateMousePos(double, double);
 	glm::vec2 updateMousePos(glm::vec2 mouse);

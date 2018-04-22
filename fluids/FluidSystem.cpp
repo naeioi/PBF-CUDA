@@ -1,27 +1,30 @@
 #include "FluidSystem.h"
 #include "FixedCubeSource.h"
+#include "FluidParams.h"
 
 FluidSystem::FluidSystem()
 {
 	m_tictoc = 0;
+	m_nextFrame = false;
 
 	/* Initialize Component */
-	const float
-		g = 9.8f,
-		h = .1f,
-		dt = 0.0083f,
-		pho0 = 8000.f,
-		lambda_eps = 1000.f,
-		delta_q = 0.3 * h,
-		k_corr = 0.001f,
-		n_corr = 4,
-		k_boundaryDensity = 50.f,
-		c_XSPH = 0.01f;
-	const float3 ulim = make_float3(1.5f, 1.5f, 3.f), llim = make_float3(-1.5f, -1.5f, 0.f);
-	const int niter = 4;
+	FluidParams fluidParams;
+	fluidParams.g = 9.8f,
+	fluidParams.h = .1f,
+	fluidParams.dt = 0.0083f,
+	fluidParams.pho0 = 8000.f,
+	fluidParams.lambda_eps = 1000.f,
+	fluidParams.delta_q = 0.3 * fluidParams.h,
+	fluidParams.k_corr = 0.001f,
+	fluidParams.n_corr = 4,
+	fluidParams.k_boundaryDensity = 50.f,
+	fluidParams.c_XSPH = 0.01f;
+	fluidParams.niter = 4;
 
-	m_simulator = new Simulator(g, h, dt, pho0, lambda_eps, delta_q, k_corr, n_corr, k_boundaryDensity, c_XSPH, niter, ulim, llim);
-	m_renderer = new SimpleRenderer(ulim, llim);
+	const float3 ulim = make_float3(1.5f, 1.5f, 3.f), llim = make_float3(-1.5f, -1.5f, 0.f);
+
+	m_simulator = new Simulator(fluidParams, ulim, llim);
+	m_renderer = new SimpleRenderer(fluidParams, ulim, llim, [this]() { m_nextFrame = true; });
 	m_source = new FixedCubeSource(
 		/* limits */  make_float3(1.f, 1.f, 2.f), make_float3(-1.f, -1.f, 1.f),
 		/* numbers */ make_int3(20, 20, 10));
@@ -68,12 +71,17 @@ void FluidSystem::stepSource() {
 }
 
 void FluidSystem::stepSimulate() {
+	if (!(m_renderer->m_input->running || m_nextFrame)) return;
+
+	m_simulator->loadParams(m_renderer->m_input->fluidParams);
+
 	if (!m_tictoc)
 		m_simulator->step(d_pos, d_npos, d_vel, d_nvel, d_iid, d_niid, m_nparticle);
 	else 
 		m_simulator->step(d_npos, d_pos, d_nvel, d_vel, d_niid, d_iid, m_nparticle);
 	
 	m_tictoc = !m_tictoc;
+	m_nextFrame = false;
 }
 
 void FluidSystem::render() {

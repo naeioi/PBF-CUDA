@@ -82,3 +82,32 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 	checkCudaErrors(cudaGraphicsUnregisterResource(dcr_nvel));
 	checkCudaErrors(cudaGraphicsUnregisterResource(dcr_niid));
 }
+
+void Simulator::loadParams(const FluidParams & params)
+{
+	m_dt = params.dt;
+	m_gravity = params.g;
+	m_h = params.h;
+	m_pho0 = params.pho0;
+	m_lambda_eps = params.lambda_eps;
+	m_delta_q = params.delta_q;
+	m_k_corr = params.k_corr;
+	m_n_corr = params.n_corr;
+	m_k_boundaryDensity = params.k_boundaryDensity;
+	m_c_XSPH = params.c_XSPH;
+	m_niter = params.niter;
+}
+
+void Simulator::saveParams(FluidParams &params) {
+	params.dt = m_dt;
+	params.g = m_gravity;
+	params.h = m_h;
+	params.pho0 = m_pho0;
+	params.lambda_eps = m_lambda_eps;
+	params.delta_q = m_delta_q;
+	params.k_corr = m_k_corr;
+	params.n_corr = m_n_corr;
+	params.k_boundaryDensity = m_k_boundaryDensity;
+	params.c_XSPH = m_c_XSPH;
+	params.niter = m_niter;
+}

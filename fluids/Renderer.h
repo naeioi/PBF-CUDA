@@ -1,8 +1,8 @@
 #pragma once
 #include "helper.h"
 
-const int WINDOW_HEIGHT = 900;
-const int WINDOW_WIDTH = 1200;
+const int WINDOW_HEIGHT = 400;
+const int WINDOW_WIDTH = 600;
 
 class Renderer
 {

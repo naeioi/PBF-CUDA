@@ -42,7 +42,7 @@ private:
 	GLuint d_iid, d_niid;
 
 	/* tic: d_pos, toc: d_npos for rendering */
-	bool m_tictoc;
+	bool m_tictoc, m_nextFrame;
 	int  m_nparticle;
 };
 

@@ -115,6 +115,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="..\common\nanovg\src\stb_truetype.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="FixedCubeSource.h" />
+    <ClInclude Include="FluidParams.h" />
     <ClInclude Include="FluidSystem.h" />
     <ClInclude Include="helper.h" />
     <ClInclude Include="Input.h" />

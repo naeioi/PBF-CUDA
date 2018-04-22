@@ -9,7 +9,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 
 
-void SimpleRenderer::init() {
+void SimpleRenderer::init(const FluidParams &params) {
 
 	m_width = WINDOW_WIDTH;
 	m_height = WINDOW_HEIGHT;
@@ -31,6 +31,8 @@ void SimpleRenderer::init() {
 	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
 	m_input = new Input();
+	m_input->fluidParams = params;
+
 	m_window = glfwCreateWindow(m_width, m_height, "Fluid", nullptr, nullptr);
 	if (m_window == nullptr) {
 		printf("Failed to create GLFW window\n");
@@ -50,10 +52,12 @@ void SimpleRenderer::init() {
 
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 	glEnable(GL_DEPTH_TEST);
-
+	
 	/* Init nanogui */
+	// m_gui_screen = new nanogui::Screen(Eigen::Vector2i(1024, 768), "Fluids");
 	m_gui_screen = new nanogui::Screen();
 	m_gui_screen->initialize(m_window, true);
+	m_gui_screen->setSize(Eigen::Vector2i(800, 600));
 
 	int width_, height_;
 	glfwGetFramebufferSize(m_window, &width_, &height_);
@@ -62,11 +66,27 @@ void SimpleRenderer::init() {
 	glfwSwapBuffers(m_window);
 
 	m_gui_form = new nanogui::FormHelper(m_gui_screen);
-	nanogui::ref<nanogui::Window> nanoWin = m_gui_form->addWindow(Eigen::Vector2i(10, 10), "Tester");
-	m_gui_form->addVariable("double", m_dvar)->setSpinnable(true);
+	nanogui::ref<nanogui::Window> nanoWin = m_gui_form->addWindow(Eigen::Vector2i(30, 50), "Tester");
+
+	m_gui_form->addVariable("# iterations", m_input->fluidParams.niter)->setSpinnable(true);
+	m_gui_form->addVariable("pho0", m_input->fluidParams.pho0)->setSpinnable(true);
+	m_gui_form->addVariable("g", m_input->fluidParams.g)->setSpinnable(true);
+	m_gui_form->addVariable("h", m_input->fluidParams.h)->setSpinnable(true);
+	m_gui_form->addVariable("dt", m_input->fluidParams.dt)->setSpinnable(true);
+	m_gui_form->addVariable("lambda_eps", m_input->fluidParams.lambda_eps)->setSpinnable(true);
+	m_gui_form->addVariable("delta_q", m_input->fluidParams.delta_q)->setSpinnable(true);
+	m_gui_form->addVariable("k_corr", m_input->fluidParams.k_corr)->setSpinnable(true);
+	m_gui_form->addVariable("n_corr", m_input->fluidParams.n_corr)->setSpinnable(true);
+	m_gui_form->addVariable("k_boundary", m_input->fluidParams.k_boundaryDensity)->setSpinnable(true);
+	m_gui_form->addVariable("c_XSPH", m_input->fluidParams.c_XSPH)->setSpinnable(true);
+	m_gui_form->addButton("Next Frame", [this]() { m_nextFrameBtnCb();  });
+	auto runBtn = m_gui_form->addButton("Run", []() {});
+	runBtn->setFlags(nanogui::Button::ToggleButton);
+	runBtn->setChangeCallback([this](bool state) { m_input->running = state; });
+
 	m_gui_screen->setVisible(true);
 	m_gui_screen->performLayout();
-	nanoWin->center();
+	// nanoWin->center();
 
 	__binding();
 
@@ -94,10 +114,11 @@ void SimpleRenderer::__window_size_callback(GLFWwindow* window, int width, int h
 	m_height = height;
 	glViewport(0, 0, width, height);
 	m_camera->setAspect((float)width / height);
+	m_gui_screen->resizeCallbackEvent(width, height);
 }
 
 void SimpleRenderer::__mouse_button_callback(GLFWwindow *w, int button, int action, int mods) {
-	//m_gui_screen->mouseButtonCallbackEvent(button, action, mods);
+	if (m_gui_screen->mouseButtonCallbackEvent(button, action, mods)) return;
 
 	Input::Pressed updown = action == GLFW_PRESS ? Input::DOWN : Input::UP;
 	if (button == GLFW_MOUSE_BUTTON_LEFT)
@@ -109,7 +130,7 @@ void SimpleRenderer::__mouse_button_callback(GLFWwindow *w, int button, int acti
 }
 
 void SimpleRenderer::__mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
-	//m_gui_screen->cursorPosCallbackEvent(xpos, ypos);
+	if (m_gui_screen->cursorPosCallbackEvent(xpos, ypos)) return;
 
 	m_input->updateMousePos(glm::vec2(xpos, ypos));
 
@@ -129,8 +150,17 @@ void SimpleRenderer::__mouse_move_callback(GLFWwindow* window, double xpos, doub
 	
 }
 
+void SimpleRenderer::__key_callback(GLFWwindow *w, int key, int scancode, int action, int mods) {
+	m_gui_screen->keyCallbackEvent(key, scancode, action, mods);
+}
+
 void SimpleRenderer::__mouse_scroll_callback(GLFWwindow *w, float dx, float dy) {
+	if(m_gui_screen->scrollCallbackEvent(dx, dy)) return;
 	m_camera->zoom(dy);
+}
+
+void SimpleRenderer::__char_callback(GLFWwindow *w, unsigned int codepoint) {
+	m_gui_screen->charCallbackEvent(codepoint);
 }
 
 void SimpleRenderer::__binding() {
@@ -162,6 +192,16 @@ void SimpleRenderer::__binding() {
 		((SimpleRenderer*)(glfwGetWindowUserPointer(w)))->__mouse_scroll_callback(w, dx, dy);
 	});
 
+	/* GUI keyboard input */
+	glfwSetKeyCallback(m_window,
+		[](GLFWwindow *w, int key, int scancode, int action, int mods) {
+		((SimpleRenderer*)(glfwGetWindowUserPointer(w)))->__key_callback(w, key, scancode, action, mods);
+	});
+
+	glfwSetCharCallback(m_window,
+		[](GLFWwindow *w, unsigned int codepoint) {
+		((SimpleRenderer*)(glfwGetWindowUserPointer(w)))->__char_callback(w, codepoint);
+	});
 }
 
 bool move = false;

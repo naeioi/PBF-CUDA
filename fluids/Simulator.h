@@ -1,14 +1,15 @@
 #pragma once
 #include "helper.h"
+#include "FluidParams.h"
 #include <math.h>
 #include <helper_cuda.h>
 
 class Simulator
 {
 public:
-	Simulator(float gravity, float h, float dt, float pho0, float lambda_eps, float delta_q, float k_corr, float n_corr, float k_boundaryDensity, float c_XSPH, uint niter, float3 ulim, float3 llim) 
-		: m_gravity(gravity), m_h(h), m_dt(dt), m_pho0(pho0), m_lambda_eps(lambda_eps), m_delta_q(delta_q), m_k_corr(k_corr), m_n_corr(n_corr), m_k_boundaryDensity(k_boundaryDensity), m_c_XSPH(c_XSPH)
-		, m_niter(niter), m_ulim(ulim), m_llim(llim) {
+	Simulator(const FluidParams &params, float3 ulim, float3 llim) : m_ulim(ulim), m_llim(llim) {
+
+		loadParams(params);
 
 		checkCudaErrors(cudaMalloc(&dc_gridId, sizeof(uint) * MAX_PARTICLE_NUM));
 		checkCudaErrors(cudaMalloc(&dc_gridStart, sizeof(uint) * MAX_PARTICLE_NUM));
@@ -32,6 +33,8 @@ public:
 
 	/* TODO: may swap(d_pos, d_npos), i.e., the destination is assigned by Simulator, rather than caller */
 	void step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_iid, uint d_niid, int nparticle);
+	void loadParams(const FluidParams &params);
+	void saveParams(FluidParams &params);
 private:
 	void advect();
 	void buildGridHash();

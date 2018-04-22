@@ -10,7 +10,6 @@ int main() {
 
 	while (1) {
 		fluids.render();
-		getch();
 		if (1) {
 			fluids.stepSimulate();
 			move = false;
