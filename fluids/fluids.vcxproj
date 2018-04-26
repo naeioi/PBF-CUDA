@@ -43,7 +43,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\common\includes\nanogui-includes;$(SolutionDir)\common\cuda_inc;$(SolutionDir)\common\includes;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\common\nanogui\ext-includes;$(SolutionDir)\common\cuda_inc;$(SolutionDir)\common\includes;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\common\libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

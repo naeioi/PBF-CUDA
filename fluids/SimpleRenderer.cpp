@@ -52,6 +52,9 @@ void SimpleRenderer::init(const FluidParams &params) {
 
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+	// glEnable(GL_BLEND);
+	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
 	/* Init nanogui */
 	// m_gui_screen = new nanogui::Screen(Eigen::Vector2i(1024, 768), "Fluids");
@@ -66,7 +69,7 @@ void SimpleRenderer::init(const FluidParams &params) {
 	glfwSwapBuffers(m_window);
 
 	m_gui_form = new nanogui::FormHelper(m_gui_screen);
-	nanogui::ref<nanogui::Window> nanoWin = m_gui_form->addWindow(Eigen::Vector2i(30, 50), "Tester");
+	nanogui::ref<nanogui::Window> nanoWin = m_gui_form->addWindow(Eigen::Vector2i(30, 50), "Parameters");
 
 	m_gui_form->addVariable("# iterations", m_input->fluidParams.niter)->setSpinnable(true);
 	m_gui_form->addVariable("pho0", m_input->fluidParams.pho0)->setSpinnable(true);
@@ -79,6 +82,7 @@ void SimpleRenderer::init(const FluidParams &params) {
 	m_gui_form->addVariable("n_corr", m_input->fluidParams.n_corr)->setSpinnable(true);
 	m_gui_form->addVariable("k_boundary", m_input->fluidParams.k_boundaryDensity)->setSpinnable(true);
 	m_gui_form->addVariable("c_XSPH", m_input->fluidParams.c_XSPH)->setSpinnable(true);
+	m_gui_form->addVariable("Highlight #", m_input->hlIndex)->setSpinnable(true);
 	m_gui_form->addButton("Next Frame", [this]() { m_nextFrameBtnCb();  });
 	auto runBtn = m_gui_form->addButton("Run", []() {});
 	runBtn->setFlags(nanogui::Button::ToggleButton);
@@ -96,7 +100,8 @@ void SimpleRenderer::init(const FluidParams &params) {
 
 	m_camera = new Camera(pos, aspect);
 	/* This will loaded shader from shader/simple.cpp automatically */
-	m_shader = new Shader();
+	m_box_shader = new Shader(box_vshader, box_fshader);
+	m_particle_shader = new Shader(particle_vshader, particle_fshader);
 
 	glGenVertexArrays(1, &d_vao);
 	glGenVertexArrays(1, &d_bbox_vao);
@@ -211,26 +216,30 @@ void SimpleRenderer::__processInput() {
 }
 
 void SimpleRenderer::__render() {
+	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	/* == draw cubes == */
-	if (m_shader->loaded()) {
-		m_shader->use();
+	if (m_particle_shader->loaded()) {
+		m_particle_shader->use();
+		m_camera->use(Shader::now());
 
+		m_particle_shader->setUnif("color", glm::vec4(1.f, 0.f, 0.f, .1f));
+		m_particle_shader->setUnif("pointRadius", m_input->fluidParams.h);
+		m_particle_shader->setUnif("pointScale", 500.f);
+		m_particle_shader->setUnif("hlIndex", m_input->hlIndex);
+		glBindVertexArray(d_vao);
+		glDrawArrays(GL_POINTS, 0, m_nparticle);
+	}
+
+	if (m_box_shader->loaded()) {
+		m_box_shader->use();
 		m_camera->use(Shader::now());
 
 		/* draw particles */
-		m_shader->setUnif("color", glm::vec4(1.f, 0.f, 0.f, 1.f));
-		glBindVertexArray(d_vao);
-		glDrawArrays(GL_POINTS, 0, m_nparticle);
-
-		/* draw bounding box */
-		m_shader->setUnif("color", glm::vec4(1.f, 1.f, 1.f, 1.f));
 		glBindVertexArray(d_bbox_vao);
+		m_box_shader->setUnif("color", glm::vec4(1.f, 1.f, 1.f, 1.f));
 		glDrawArrays(GL_LINES, 0, 12 * 2);
-
-		/* TODO: draw floor */
 	}
 
 }
@@ -238,15 +247,17 @@ void SimpleRenderer::__render() {
 SimpleRenderer::~SimpleRenderer()
 {
 	if (m_camera) delete m_camera;
-	if (m_shader) delete m_shader;
+	if (m_box_shader) delete m_box_shader;
+	if (m_particle_shader) delete m_particle_shader;
 	/* TODO: m_window, input */
 	if (m_input) delete m_input;
 }
 
-void SimpleRenderer::render(uint pos, int nparticle) {
+void SimpleRenderer::render(uint pos, uint iid, int nparticle) {
 	/** 
 	 * @input pos vertex buffer object 
 	 */
+	d_iid = iid;
 	d_pos = pos;
 	m_nparticle = nparticle;
 
@@ -254,6 +265,10 @@ void SimpleRenderer::render(uint pos, int nparticle) {
 	glBindBuffer(GL_ARRAY_BUFFER, d_pos);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, d_iid);
+	/* MUST use glVertexAttribIPointer, not glVertexAttribPointer, for uint attribute */
+	glVertexAttribIPointer(1, 1, GL_UNSIGNED_INT, 0, (void*)0);
+	glEnableVertexAttribArray(1);
 
 	/* == Bounding box == */
 	float x1 = fmin(m_ulim.x, m_llim.x), x2 = fmax(m_ulim.x, m_llim.x),

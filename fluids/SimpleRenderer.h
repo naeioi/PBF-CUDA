@@ -16,7 +16,7 @@ public:
 	SimpleRenderer(const FluidParams &params, float3 ulim, float3 llim, std::function<void()> nextCb) : m_ulim(ulim), m_llim(llim), m_nextFrameBtnCb(nextCb) { init(params); };
 	~SimpleRenderer();
 
-	void render(uint pos, int m_nparticle);
+	void render(uint pos, uint iid, int m_nparticle);
 
 	Input *m_input;
 private:
@@ -39,14 +39,15 @@ private:
 	/* Nsight debugging cannot work without a vao */
 	uint d_vao, d_bbox_vao, d_bbox_vbo;
 	/* particle position vbo */
-	uint d_pos;
+	uint d_pos, d_iid;
 	/* bounding box */
 	float3 m_llim, m_ulim;
 
 	/* Renderer states */
 	Camera *m_camera;
 
-	Shader *m_shader;
+	Shader *m_box_shader;
+	Shader *m_particle_shader;
 
 	GLFWwindow *m_window;
 

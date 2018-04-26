@@ -5,7 +5,7 @@
 #include <thrust/execution_policy.h>
 #include <thrust/sort.h>
 #include <thrust/functional.h>
-#include <thrust/device_ptr.h>
+#include <thrust/device_ptr.h> 
 
 #include "Simulator_kernel.cuh"
 
@@ -45,7 +45,9 @@ struct getGridxyz {
 	__device__
 	int3 operator()(float3 pos) {
 		float3 diff = pos - llim;
-		int x = diff.x / h, y = diff.y / h, z = diff.z / h;
+		int x = min(max((int)(diff.x / h), 0), gridDim.x), 
+			y = min(max((int)(diff.y / h), 0), gridDim.y), 
+			z = min(max((int)(diff.z / h), 0), gridDim.z);
 		return make_int3(x, y, z);
 	}
 };
@@ -190,7 +192,7 @@ void Simulator::buildGridHash()
 	int smem = sizeof(uint) * (block_size + 2);
 
 	thrust::device_ptr<float3> d_pos(dc_pos), d_vel(dc_vel), d_npos(dc_npos), d_nvel(dc_nvel);
-	thrust::device_ptr<uint> d_gridId(dc_gridId);
+	thrust::device_ptr<uint> d_gridId(dc_gridId), d_iid(dc_iid);
 
 	float3 diff = m_ulim - m_llim;
 	m_gridHashDim = make_int3((int)ceilf(.5f * diff.x / m_h), (int)ceilf(.5f * diff.y / m_h), (int)ceilf(.5f * diff.z / m_h));
@@ -203,9 +205,12 @@ void Simulator::buildGridHash()
 	/* sort (gridId, pos, vel) by gridId */
 	thrust::sort_by_key(
 		d_gridId, d_gridId + m_nparticle,
-		thrust::make_zip_iterator(thrust::make_tuple(d_pos, d_vel, d_npos, d_nvel)));
+		thrust::make_zip_iterator(thrust::make_tuple(d_pos, d_vel, d_npos, d_nvel, d_iid)));
 
 	/* Compute [gradStart, gradEnd) */
+	int cellNum = m_gridHashDim.x * m_gridHashDim.y * m_gridHashDim.z;
+	cudaMemset(dc_gridStart, 0, sizeof(dc_gridStart[0]) * cellNum);
+	cudaMemset(dc_gridEnd, 0, sizeof(dc_gridEnd[0]) * cellNum);
 	computeGridRange<<<grid_size, block_size, smem>>>(dc_gridId, dc_gridStart, dc_gridEnd, m_nparticle);
 
 	// cudaDeviceSynchronize();

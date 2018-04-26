@@ -31,4 +31,5 @@ void Input::reset() {
 	last_mouse_valid = false;
 	running = false;
 	right_mouse = left_mouse = UP;
+	hlIndex = 0;
 }

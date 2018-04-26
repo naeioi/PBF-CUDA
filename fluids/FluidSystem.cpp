@@ -18,7 +18,7 @@ FluidSystem::FluidSystem()
 	fluidParams.k_corr = 0.001f,
 	fluidParams.n_corr = 4,
 	fluidParams.k_boundaryDensity = 50.f,
-	fluidParams.c_XSPH = 0.01f;
+	fluidParams.c_XSPH = 0.0f;
 	fluidParams.niter = 4;
 
 	const float3 ulim = make_float3(1.5f, 1.5f, 3.f), llim = make_float3(-1.5f, -1.5f, 0.f);
@@ -27,8 +27,8 @@ FluidSystem::FluidSystem()
 	m_renderer = new SimpleRenderer(fluidParams, ulim, llim, [this]() { m_nextFrame = true; });
 	m_source = new FixedCubeSource(
 		/* limits */  make_float3(1.f, 1.f, 2.f), make_float3(-1.f, -1.f, 1.f),
-		/* numbers */ make_int3(20, 20, 10));
-	m_nparticle = 20 * 20 * 10;
+		/* numbers */ make_int3(15, 15, 10));
+	m_nparticle = 15 * 15 * 10;
 
 	/* Initialize vertex buffer */
 	glGenBuffers(1, &d_pos);
@@ -78,7 +78,7 @@ void FluidSystem::stepSimulate() {
 	if (!m_tictoc)
 		m_simulator->step(d_pos, d_npos, d_vel, d_nvel, d_iid, d_niid, m_nparticle);
 	else 
-		m_simulator->step(d_npos, d_pos, d_nvel, d_vel, d_niid, d_iid, m_nparticle);
+		m_simulator->step(d_npos, d_pos, d_nvel, d_vel, d_iid, d_niid, m_nparticle);
 	
 	m_tictoc = !m_tictoc;
 	m_nextFrame = false;
@@ -86,9 +86,9 @@ void FluidSystem::stepSimulate() {
 
 void FluidSystem::render() {
 	if (!m_tictoc)
-		m_renderer->render(d_pos, m_nparticle);
+		m_renderer->render(d_pos, d_iid, m_nparticle);
 	else
-		m_renderer->render(d_npos, m_nparticle);
+		m_renderer->render(d_npos, d_iid, m_nparticle);
 }
 
 FluidSystem::~FluidSystem()

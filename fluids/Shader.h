@@ -10,8 +10,10 @@
 #include <cstring>
 #include <cstdio>
 
-extern const char* vshader;
-extern const char* fshader;
+extern const char* box_vshader;
+extern const char* box_fshader;
+extern const char* particle_vshader;
+extern const char* particle_fshader;
  
 class Shader
 {
@@ -27,6 +29,7 @@ public:
 
 	void setUnif(const std::string &name, bool value) const;
 	void setUnif(const std::string &name, int value) const;
+	void setUnif(const std::string &name, uint value) const;
 	void setUnif(const std::string &name, float value) const;
 	void setUnif(const std::string &name, double value) const;
 	void setUnif(const std::string &name, glm::mat2 &mat) const;

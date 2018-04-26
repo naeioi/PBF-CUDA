@@ -25,4 +25,5 @@ struct Input {
 	glm::vec2 getMouseDiff();
 	void reset();
 
+	unsigned int hlIndex;
 };

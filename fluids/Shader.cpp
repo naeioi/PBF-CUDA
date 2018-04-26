@@ -11,8 +11,6 @@
 Shader* Shader::current = nullptr;
 
 Shader::Shader() {
-	/* These two extern pointer to shader code are defined in Shader.h */
-	*this = Shader(vshader, fshader);
 }
 
 Shader::Shader(const char* vshader, const char* fshader)
@@ -91,6 +89,11 @@ void Shader::setUnif(const std::string & name, bool value) const
 void Shader::setUnif(const std::string & name, int value) const
 {
 	glUniform1i(glGetUniformLocation(id, name.c_str()), (int)value);
+}
+
+void Shader::setUnif(const std::string & name, uint value) const
+{
+	glUniform1ui(glGetUniformLocation(id, name.c_str()), (uint)value);
 }
 
 void Shader::setUnif(const std::string & name, float value) const

@@ -54,5 +54,7 @@ void FixedCubeSource::__realloc(int max_nparticle)
 			m_vel = (float3*)malloc(max_nparticle * sizeof(m_vel[0]));
 			m_iid = (uint*)malloc(max_nparticle * sizeof(m_iid[0]));
 		}
+
+		m_nallocated = max_nparticle;
 	}
 }

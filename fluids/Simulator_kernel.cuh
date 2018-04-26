@@ -30,13 +30,16 @@ __global__ void computeGridRange(uint* gridIds, uint* gridStart, uint* gridEnd, 
 
 		if (current != last) {
 			gridStart[current] = i;
+			// printf("gridStart[%d]=%d\n", current, i);
 			if (last != (uint)-1) {
 				gridEnd[last] = i;
+				// printf("gridEnd[%d]=%d\n", last, i);
 			}
 		}
 
 		if (i == n - 1) {
 			gridEnd[current] = n;
+			// printf("gridEnd[%d]=%d\n", current, i);
 		}
 	}
 }
@@ -44,10 +47,9 @@ __global__ void computeGridRange(uint* gridIds, uint* gridStart, uint* gridEnd, 
 __host__ __device__
 float h_poly6(float h, float r2) {
 	float h2 = h * h;
-	if (r2 >= h2 || r2 < KERNAL_EPS) return 0;
-	float h3 = h2 * h;
-	float h9 = h3 * h3;
-	float coef = 315.f / (64.f * M_PI *  h9);
+	if (r2 >= h2) return 0;
+	float ih9 = powf(h, -9.f);
+	float coef = 315.f * ih9 / (64.f * M_PI);
 	return coef * (h2 - r2) * (h2 - r2) * (h2 - r2);
 }
 
@@ -55,9 +57,8 @@ __host__ __device__
 float3 h_spikyGrad(float h, float3 r) {
 	float rlen = length(r);
 	if (rlen >= h || rlen < KERNAL_EPS) return make_float3(0.f, 0.f, 0.f);
-	float h6 = h * h;
-	h6 = h6 * h6 * h6;
-	float coef = -45.f / (M_PI * h6);
+	float ih6 = powf(h, -6.f);
+	float coef = -45.f * ih6 / M_PI;
 	return (coef * (h - rlen) * (h - rlen)) * normalize(r);
 }
 
@@ -79,6 +80,10 @@ void computeLambda(
 
 	/* -- Compute lambda -- */
 
+	if (i == 0) {
+		printf("pos[0]=(%f,%f,%f)\n", expand(pos[0]));
+	}
+
 	int3 ind = posToCellxyz(pos[i]);
 	float pho = 0.f, gradj_l2 = 0.f, grad_l2;
 	float3 gradi = make_float3(0, 0, 0), grad, cpos = pos[i];
@@ -95,13 +100,23 @@ void computeLambda(
 				int cellId = cellxyzToId(x, y, z);
 				uint start = cellStarts[cellId], end = cellEnds[cellId];
 
-				for (int j = start; j < end; j++) if (j != i) {
+				for (int j = start; j < end; j++) {
 					float3 d = cpos - pos[j];
 					float r2 = d.x * d.x + d.y * d.y + d.z * d.z;
 					pho += h_poly6(h, r2);
+					if (j == i && i == 0) {
+						printf("h_poly6(h, 0)=%f\n", h_poly6(h, r2));
+					}
 					grad = h_spikyGrad(h, d) / pho0;
 					gradi += grad;
-					gradj_l2 += grad.x * grad.x + grad.y * grad.y + grad.z * grad.z;
+					if (j != i) {
+						gradj_l2 += grad.x * grad.x + grad.y * grad.y + grad.z * grad.z;
+					}
+					else {
+						if (0 && i == 0) {
+							printf("j in (%d; %d, %d) hits i for #0 particle\n", cellId, start, end);
+						}
+					}
 				}
 			}
 		}
@@ -126,7 +141,7 @@ void computeLambda(
 	grad_l2 = gradj_l2 + gradi.x * gradi.x + gradi.y * gradi.y + gradi.z * gradi.z;	
 	lambdas[i] = -(pho / pho0 - 1) / (grad_l2 + lambda_eps);
 
-	if (i == 0) printf("lambdas[0]=%f\n", lambdas[i]);
+	if (i == 0) printf("(pho, pho/pho0, lambdas)[0]=(%f, %f, %f)\n", pho, pho/pho0, lambdas[i]);
 }
 
 template <typename Func1, typename Func2>
@@ -194,8 +209,8 @@ void computedpos(
 	cpos.z = max(min(cpos.z, ulim.z), llim.z);
 	pos[i] = cpos;
 
-	if (0 && i == 0) {
-		printf("npos[0]=(%f,%f,%f)\n", pos[0].x, pos[0].y, pos[0].z);
+	if (i == 0) {
+		printf("dpos[0]=(%f,%f,%f)\n", expand(d));
 	}
 }
 
@@ -222,8 +237,8 @@ void computeXSPH(
 				int z = xyz.z + dz;
 				if (x < 0 || x >= cellDim.x || y < 0 || y >= cellDim.y || z < 0 || z >= cellDim.z) continue;
 
-				int ncell = grid_xyz2id(x, y, z);
-				for (int j = cellStarts[ncell]; j < cellEnds[ncell]; j++) {
+				int ncell = grid_xyz2id(x, y, z), start = cellStarts[ncell], end = cellEnds[ncell];
+				for (int j = start; j < end; j++) {
 					float3 dp = cpos - pos[j];
 					float3 vp = cvel - vel[j];
 					avel += vp * h_poly6(h, norm2(dp));
@@ -233,4 +248,7 @@ void computeXSPH(
 	}
 
 	nvel[i] = vel[i] + c_XSPH * avel;
+	if (i == 0) {
+		printf("nvel[0]=(%f,%f,%f), vel[0]=(%f,%f,%f)\n", expand(nvel[i]), expand(vel[i]));
+	}
 }
