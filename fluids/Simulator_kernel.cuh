@@ -67,7 +67,7 @@ float3 h_spikyGrad(float h, float3 r) {
 template <typename Func1, typename Func2, typename Func3>
 __global__
 void computeLambda(
-	float* lambdas, /*float* grads_l2,*/
+	float* lambdas, float* phos,
 	uint* cellIds, uint* cellStarts, uint* cellEnds,
 	int3 cellDim,
 	float3* pos, int n, float pho0, float lambda_eps, float k_boundaryDensity,
@@ -140,6 +140,7 @@ void computeLambda(
 
 	grad_l2 = gradj_l2 + gradi.x * gradi.x + gradi.y * gradi.y + gradi.z * gradi.z;	
 	lambdas[i] = -(pho / pho0 - 1) / (grad_l2 + lambda_eps);
+	phos[i] = pho;
 
 	if (i == 0) printf("(pho, pho/pho0, lambdas)[0]=(%f, %f, %f)\n", pho, pho/pho0, lambdas[i]);
 }
@@ -147,10 +148,10 @@ void computeLambda(
 template <typename Func1, typename Func2>
 __global__
 void computedpos(
-	float* lambdas, /*float* grads_l2,*/
+	float* lambdas, 
 	uint* cellIds, uint* cellStarts, uint* cellEnds,
 	int3 cellDim,
-	float3* pos, float3* dpos, int n, 
+	float3* pos, int n, 
 	float pho0, float h, float coef_corr, float n_corr, 
 	Func1 posToCellxyz, Func2 cellxyzToId, float3 ulim, float3 llim) {
 
@@ -217,6 +218,7 @@ void computedpos(
 template <typename Func1, typename Func2>
 __global__
 void computeXSPH(
+	float* phos,
 	uint* cellStarts, uint* cellEnds, int3 cellDim,
 	float3* pos, float3* vel, float3* nvel, int n,
 	float c_XSPH, float h,
@@ -226,6 +228,7 @@ void computeXSPH(
 
 	if (i >= n) return;
 
+	float cpho = phos[i];
 	float3 cpos = pos[i], cvel = vel[i], avel = make_float3(0.f, 0.f, 0.f);
 	int3 xyz = grid_pos2xyz(cpos);
 
@@ -240,8 +243,8 @@ void computeXSPH(
 				int ncell = grid_xyz2id(x, y, z), start = cellStarts[ncell], end = cellEnds[ncell];
 				for (int j = start; j < end; j++) {
 					float3 dp = cpos - pos[j];
-					float3 vp = cvel - vel[j];
-					avel += vp * h_poly6(h, norm2(dp));
+					float3 vp = vel[j] - cvel;
+					avel += 2.f * vp * h_poly6(h, norm2(dp)) / (cpho + phos[j]);
 				}
 			}
 		}

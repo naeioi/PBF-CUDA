@@ -36,7 +36,6 @@ FluidSystem::FluidSystem()
 	glGenBuffers(1, &d_vel);
 	glGenBuffers(1, &d_nvel);
 	glGenBuffers(1, &d_iid);
-	glGenBuffers(1, &d_niid);
 
 	glBindBuffer(GL_ARRAY_BUFFER, d_pos);
 	glBufferData(GL_ARRAY_BUFFER,  MAX_PARTICLE_NUM * sizeof(float3), NULL, GL_DYNAMIC_DRAW);
@@ -53,9 +52,6 @@ FluidSystem::FluidSystem()
 	glBindBuffer(GL_ARRAY_BUFFER, d_iid);
 	glBufferData(GL_ARRAY_BUFFER,  MAX_PARTICLE_NUM * sizeof(uint),   NULL, GL_DYNAMIC_DRAW);
 	checkGLErr();
-	glBindBuffer(GL_ARRAY_BUFFER, d_niid);
-	glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLE_NUM * sizeof(uint),   NULL, GL_DYNAMIC_DRAW);
-	checkGLErr();
 }
 
 void FluidSystem::initSource() 
@@ -67,7 +63,7 @@ void FluidSystem::stepSource() {
 	if (!m_tictoc)
 		m_nparticle = m_source->update(d_pos,  d_vel,  d_iid,  MAX_PARTICLE_NUM);
 	else 
-		m_nparticle = m_source->update(d_npos, d_nvel, d_niid, MAX_PARTICLE_NUM);
+		m_nparticle = m_source->update(d_npos, d_nvel, d_iid, MAX_PARTICLE_NUM);
 }
 
 void FluidSystem::stepSimulate() {
@@ -76,9 +72,9 @@ void FluidSystem::stepSimulate() {
 	m_simulator->loadParams(m_renderer->m_input->fluidParams);
 
 	if (!m_tictoc)
-		m_simulator->step(d_pos, d_npos, d_vel, d_nvel, d_iid, d_niid, m_nparticle);
+		m_simulator->step(d_pos, d_npos, d_vel, d_nvel, d_iid, m_nparticle);
 	else 
-		m_simulator->step(d_npos, d_pos, d_nvel, d_vel, d_iid, d_niid, m_nparticle);
+		m_simulator->step(d_npos, d_pos, d_nvel, d_vel, d_iid, m_nparticle);
 	
 	m_tictoc = !m_tictoc;
 	m_nextFrame = false;

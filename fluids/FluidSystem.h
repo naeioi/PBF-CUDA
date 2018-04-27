@@ -39,7 +39,7 @@ private:
 	/* velocity: float3 GLBuffer */
 	GLuint d_vel, d_nvel;
 	/* initial id: uint GLBuffer */
-	GLuint d_iid, d_niid;
+	GLuint d_iid;
 
 	/* tic: d_pos, toc: d_npos for rendering */
 	bool m_tictoc, m_nextFrame;

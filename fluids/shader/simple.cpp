@@ -41,6 +41,7 @@ uniform mat4 proj;
 uniform mat4 view;
 uniform float pointRadius;
 uniform float pointScale;
+uniform uint hlIndex;
 
 //	out vec4 FragPos;	
 flat out uint iid;
@@ -48,7 +49,7 @@ flat out uint iid;
 void main() {
 	vec4 eyePos = view * vec4(aPos, 1.0);
 	float dist = length(vec3(eyePos / eyePos.w));
-	gl_PointSize = pointRadius * (pointScale / dist);
+	gl_PointSize = (aiid == hlIndex ? 2 : 1) * pointRadius * (pointScale / dist);
 	gl_Position = proj * eyePos;
 	iid = aiid;
 }
@@ -72,7 +73,13 @@ void main() {
 	float r = iid % 16u / 16.f;
 	float g = iid / 16u % 16u / 16.f;
 	float b = iid / 16u % 16u / 16.f;
-	FragColor = vec4(gl_FragCoord.z, 0, 0, 1);
+	vec4 rgba = vec4(dot(lightDir, vec3(x, y, z)) * vec3(r, b, 0), 1);
+	vec4 white = vec4(dot(lightDir, vec3(x, y, z)) * vec3(1, 1, 1), 1) + 0.2;
+	if (iid == hlIndex)
+		FragColor = white;
+	else
+		FragColor = rgba;
+	// FragColor = vec4(gl_FragCoord.z, 0, 0, 1);
 	// FragColor = vec4(dot(lightDir, vec3(x, y, z)) * vec3(r, b, 0), 1);
 	// FragColor = dot(lightDir, vec3(x, y, z)) * vec3(r, b, 0, 1) * 0.7;
 }
