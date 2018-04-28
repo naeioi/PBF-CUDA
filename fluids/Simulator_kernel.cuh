@@ -3,6 +3,7 @@
 namespace cg = cooperative_groups;
 
 __global__ void advect_kernel(
+	uint* iids,
 	float3 *pos, float3 *npos, float3 *vel,
 	int nparticle, float dt, float3 g,
 	float3 ulim, float3 llim) {
@@ -10,6 +11,7 @@ __global__ void advect_kernel(
 	if (i < nparticle) {
 		vel[i] += dt * g;
 		npos[i] = pos[i] + dt * vel[i];
+		//printf("#%-3d vel=(%.3f,%.3f,%.3f), pos=(%.3f,%.3f,%.3f)->(%.3f,%.3f,%.3f)\n", iids[i], expand(vel[i]), expand(pos[i]), expand(npos[i]));
 	}
 }
 
@@ -19,8 +21,8 @@ __global__ void computeGridRange(uint* gridIds, uint* gridStart, uint* gridEnd, 
 
 	if (i < n) {
 		pre[threadIdx.x + 1] = gridIds[i];
-		pre[0] = i == 0 ? (uint)-1 : gridIds[i - 1];
-		// printf("Particle #%d at gridId %d\n", i, gridIds[i]);
+		if (threadIdx.x == 0)
+			pre[0] = i == 0 ? (uint)-1 : gridIds[i - 1];
 	}
 
 	__syncthreads();
@@ -62,11 +64,10 @@ float3 h_spikyGrad(float h, float3 r) {
 	return (coef * (h - rlen) * (h - rlen)) * normalize(r);
 }
 
-#define expand(p) p.x, p.y, p.z
-
 template <typename Func1, typename Func2, typename Func3>
 __global__
 void computeLambda(
+	uint* iids,
 	float* lambdas, float* phos,
 	uint* cellIds, uint* cellStarts, uint* cellEnds,
 	int3 cellDim,
@@ -80,15 +81,17 @@ void computeLambda(
 
 	/* -- Compute lambda -- */
 
-	if (i == 0) {
-		printf("pos[0]=(%f,%f,%f)\n", expand(pos[0]));
-	}
-
+	uint iid = iids[i];
 	int3 ind = posToCellxyz(pos[i]);
 	float pho = 0.f, gradj_l2 = 0.f, grad_l2;
 	float3 gradi = make_float3(0, 0, 0), grad, cpos = pos[i];
 
+
 #ifndef DEBUG_NO_HASH_GRID
+
+#define MI 49
+	uint starts[27], ends[27], nrange = 0;
+
 #pragma unroll 3
 	for (int dx = -1; dx <= 1; dx++) {
 #pragma unroll 3
@@ -100,30 +103,43 @@ void computeLambda(
 				int cellId = cellxyzToId(x, y, z);
 				uint start = cellStarts[cellId], end = cellEnds[cellId];
 
+				if (start +1 < end && iid == MI) {
+					starts[nrange] = start;
+					ends[nrange] = end;
+					nrange++;
+				}
+
 				for (int j = start; j < end; j++) {
 					float3 d = cpos - pos[j];
 					float r2 = d.x * d.x + d.y * d.y + d.z * d.z;
+					//if (iid == MI) printf("#%-3d <~ #%-3d:(%f,%f,%f)\n", iid, iids[j], expand(pos[j]));
 					pho += h_poly6(h, r2);
-					if (j == i && i == 0) {
-						printf("h_poly6(h, 0)=%f\n", h_poly6(h, r2));
-					}
 					grad = h_spikyGrad(h, d) / pho0;
 					gradi += grad;
 					if (j != i) {
 						gradj_l2 += grad.x * grad.x + grad.y * grad.y + grad.z * grad.z;
-					}
-					else {
-						if (0 && i == 0) {
-							printf("j in (%d; %d, %d) hits i for #0 particle\n", cellId, start, end);
-						}
 					}
 				}
 			}
 		}
 	}
 
-#else
+	if (0 && iid == MI) {
+		if (nrange == 0)
+			printf("#%3d sibs: NULL\n", MI);
+		else if (nrange == 1)
+			printf("#%3d sibs: [%u,%u]\n", MI, starts[0], ends[0]);
+		else if (nrange == 2)
+			printf("#%3d sibs: [%u,%u],[%u,%u]\n", MI, starts[0], ends[0], starts[1], ends[1]);
+		else if (nrange == 3)
+			printf("#%3d sibs: [%u,%u],[%u,%u],[%u,%u]\n", MI, starts[0], ends[0], starts[1], ends[1], starts[2], ends[2]);
+		else if (nrange == 4)
+			printf("#%3d sibs: [%u,%u],[%u,%u],[%u,%u],[%u,%u]\n", MI, starts[0], ends[0], starts[1], ends[1], starts[2], ends[2], starts[3], ends[3]);
+		else if (nrange >= 5)
+			printf("#%3d sibs: [%u,%u],[%u,%u],[%u,%u],[%u,%u],[%u,%u]\n", MI, starts[0], ends[0], starts[1], ends[1], starts[2], ends[2], starts[3], ends[3], starts[4], ends[4]);
+	}
 
+#else
 
 	for (int j = 0; j < n; j++) if (j != i) {
 		float3 d = pos[i] - pos[j];
@@ -136,22 +152,25 @@ void computeLambda(
 	}
 #endif
 
-	pho += k_boundaryDensity * boundaryDensity(cpos);
+	float boundPho = k_boundaryDensity * boundaryDensity(cpos);
+	pho += boundPho;
 
 	grad_l2 = gradj_l2 + gradi.x * gradi.x + gradi.y * gradi.y + gradi.z * gradi.z;	
 	lambdas[i] = -(pho / pho0 - 1) / (grad_l2 + lambda_eps);
 	phos[i] = pho;
 
-	if (i == 0) printf("(pho, pho/pho0, lambdas)[0]=(%f, %f, %f)\n", pho, pho/pho0, lambdas[i]);
+	/*printf("#%-3d gradi=(%.3f,%.3f,%.3f), gradj_l2=%.3f, boundPho=%.3f, lambda=%.3f, pho=%.3f\n"
+		, iids[i], expand(gradi), gradj_l2, boundPho, lambdas[i], pho);*/
 }
 
 template <typename Func1, typename Func2>
 __global__
-void computedpos(
+void computetpos(
 	float* lambdas, 
+	uint* iids,
 	uint* cellIds, uint* cellStarts, uint* cellEnds,
 	int3 cellDim,
-	float3* pos, int n, 
+	float3* pos, float3 *tpos, int n, 
 	float pho0, float h, float coef_corr, float n_corr, 
 	Func1 posToCellxyz, Func2 cellxyzToId, float3 ulim, float3 llim) {
 
@@ -202,23 +221,21 @@ void computedpos(
 	// dpos[i] = d / pho0;
 	
 	d = clamp3f(d / pho0, -MAX_DP, MAX_DP);
+	//printf("#%-3d pos=(%.3f,%.3f,%.3f)+(%.3f,%.3f,%.3f)=(%.3f,%.3f,%.3f)\n", iids[i], expand(cpos), expand(d), expand(cpos+d));
 
 	cpos += d;
 
 	cpos.x = max(min(cpos.x, ulim.x), llim.x);
 	cpos.y = max(min(cpos.y, ulim.y), llim.y);
 	cpos.z = max(min(cpos.z, ulim.z), llim.z);
-	pos[i] = cpos;
-
-	if (i == 0) {
-		printf("dpos[0]=(%f,%f,%f)\n", expand(d));
-	}
+	tpos[i] = cpos;
 }
 
 template <typename Func1, typename Func2>
 __global__
 void computeXSPH(
 	float* phos,
+	uint* iids,
 	uint* cellStarts, uint* cellEnds, int3 cellDim,
 	float3* pos, float3* vel, float3* nvel, int n,
 	float c_XSPH, float h,
@@ -251,7 +268,7 @@ void computeXSPH(
 	}
 
 	nvel[i] = vel[i] + c_XSPH * avel;
-	if (i == 0) {
-		printf("nvel[0]=(%f,%f,%f), vel[0]=(%f,%f,%f)\n", expand(nvel[i]), expand(vel[i]));
+	if (0) {
+		printf("#%-3d nvel=(%f,%f,%f), vel=(%f,%f,%f)\n", iids[i], expand(nvel[i]), expand(vel[i]));
 	}
 }

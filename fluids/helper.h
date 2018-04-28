@@ -31,4 +31,6 @@ void fexit(const int code = -1, const char* msg = nullptr);
 
 void checkGLErr();
 
+#define expand(p) p.x, p.y, p.z
+
 // #define DEBUG_NO_HASH_GRID

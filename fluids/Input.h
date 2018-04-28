@@ -15,7 +15,7 @@ struct Input {
 	Pressed left_mouse, right_mouse, mid_mouse;
 	glm::vec2 last_mouse, mouse;
 	bool last_mouse_valid;
-	bool running;
+	bool running, lastFrame;
 
 	/* Simulation parameters */
 	FluidParams fluidParams;
@@ -26,4 +26,5 @@ struct Input {
 	void reset();
 
 	unsigned int hlIndex;
+	int frameCount;
 };

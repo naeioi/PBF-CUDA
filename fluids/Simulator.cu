@@ -179,6 +179,7 @@ void Simulator::advect()
 	int grid_size = ceilDiv(m_nparticle, block_size);
 
 	advect_kernel<<<grid_size, block_size>>>(
+		dc_iid,
 		dc_pos, dc_npos, 
 		dc_vel,
 		m_nparticle, m_dt, make_float3(0, 0, -m_gravity),
@@ -230,6 +231,7 @@ void Simulator::correctDensity()
 	/// cudaDeviceSynchronize();
 	/* dc_npos -> dc_npos */
 	computeLambda<<<grid_size, block_size>>>(
+		dc_iid,
 		dc_lambda, dc_pho,
 		dc_gridId, dc_gridStart, dc_gridEnd,
 		m_gridHashDim,
@@ -242,14 +244,17 @@ void Simulator::correctDensity()
 
 	m_coef_corr = -m_k_corr / powf(h_poly6(m_h, m_delta_q*m_delta_q), m_n_corr);
 
-	computedpos<<<grid_size, block_size>>>(
+	computetpos<<<grid_size, block_size>>>(
 		dc_lambda,
+		dc_iid,
 		dc_gridId, dc_gridStart, dc_gridEnd,
 		m_gridHashDim,
-		dc_npos, m_nparticle, m_pho0, m_h, m_coef_corr, m_n_corr,
+		dc_npos, dc_tpos, m_nparticle, m_pho0, m_h, m_coef_corr, m_n_corr,
 		getGridxyz(m_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim),
 		m_ulim, m_llim);
 
+	thrust::device_ptr<float3> d_npos(dc_npos), d_tpos(dc_tpos);
+	thrust::copy_n(d_tpos, m_nparticle, d_npos);
 }
 
 void Simulator::correctVelocity() {
@@ -260,6 +265,7 @@ void Simulator::correctVelocity() {
 	/* XSPH viscosity */
 	computeXSPH<<<grid_size, block_size>>>(
 		dc_pho,
+		dc_iid,
 		dc_gridStart, dc_gridEnd, m_gridHashDim,
 		dc_npos, dc_vel, dc_nvel, m_nparticle,
 		m_c_XSPH, m_h, 

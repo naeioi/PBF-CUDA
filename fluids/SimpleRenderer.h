@@ -56,5 +56,7 @@ private:
 	nanogui::FormHelper *m_gui_form;
 	std::function<void()> m_nextFrameBtnCb;
 	double m_dvar = 1.23456;
+
+	int frameCount = 0;
 };
 

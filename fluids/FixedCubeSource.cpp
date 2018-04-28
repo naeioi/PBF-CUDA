@@ -5,6 +5,8 @@
 
 int FixedCubeSource::initialize(uint pos, uint vel, uint iid, int max_nparticle) {
 	
+	srand(27);
+
 	m_count = 0;
 	__realloc(max_nparticle);
 	float sx = m_llim.x + m_d.x / 2, sy = m_llim.y + m_d.y / 2, sz = m_llim.z + m_d.z / 2, x, y, z;

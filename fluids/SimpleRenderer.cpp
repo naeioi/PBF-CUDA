@@ -71,6 +71,7 @@ void SimpleRenderer::init(const FluidParams &params) {
 	m_gui_form = new nanogui::FormHelper(m_gui_screen);
 	nanogui::ref<nanogui::Window> nanoWin = m_gui_form->addWindow(Eigen::Vector2i(30, 50), "Parameters");
 
+	m_gui_form->addVariable("# Frame", m_input->frameCount)->setEditable(false);
 	m_gui_form->addVariable("# iterations", m_input->fluidParams.niter)->setSpinnable(true);
 	m_gui_form->addVariable("pho0", m_input->fluidParams.pho0)->setSpinnable(true);
 	m_gui_form->addVariable("g", m_input->fluidParams.g)->setSpinnable(true);
@@ -87,6 +88,9 @@ void SimpleRenderer::init(const FluidParams &params) {
 	auto runBtn = m_gui_form->addButton("Run", []() {});
 	runBtn->setFlags(nanogui::Button::ToggleButton);
 	runBtn->setChangeCallback([this](bool state) { m_input->running = state; });
+	auto lastFrameBtn = m_gui_form->addButton("Last Frame", []() {});
+	lastFrameBtn->setFlags(nanogui::Button::ToggleButton);
+	lastFrameBtn->setChangeCallback([this](bool state) { m_input->lastFrame = state; });
 
 	m_gui_screen->setVisible(true);
 	m_gui_screen->performLayout();
@@ -292,6 +296,8 @@ void SimpleRenderer::render(uint pos, uint iid, int nparticle) {
 		{ glm::vec3(x2, y2, z1), glm::vec3(x2, y2, z2) } };
 	glBindBuffer(GL_ARRAY_BUFFER, d_bbox_vbo);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(lines), lines);
+
+	m_gui_form->refresh();
 
 	if (!glfwWindowShouldClose(m_window)) {
 		glfwPollEvents();

@@ -48,9 +48,9 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 	printf("buildGridHash() done.\n");
 
 	for (uint i = 0; i < m_niter; i++) {
+		printf("== Iter %d ==\n", i);
 		correctDensity();
 		cudaDeviceSynchronize();
-		printf("correctDensity() done.\n");
 	}
 
 	/* update Velocity */

@@ -29,7 +29,9 @@ glm::vec2 Input::getMouseDiff() {
 
 void Input::reset() {
 	last_mouse_valid = false;
+	lastFrame = false;
 	running = false;
 	right_mouse = left_mouse = UP;
 	hlIndex = 0;
+	frameCount = 0;
 }
