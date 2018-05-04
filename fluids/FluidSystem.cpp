@@ -17,8 +17,8 @@ FluidSystem::FluidSystem()
 	fluidParams.delta_q = 0.3 * fluidParams.h,
 	fluidParams.k_corr = 0.001f,
 	fluidParams.n_corr = 4,
-	fluidParams.k_boundaryDensity = 50.f,
-	fluidParams.c_XSPH = 0.0f;
+	fluidParams.k_boundaryDensity = 0.f,
+	fluidParams.c_XSPH = 0.f;
 	fluidParams.niter = 4;
 
 	const float3 ulim = make_float3(.5f, .5f, 2.f), llim = make_float3(-.5f, -.5f, 0.f);

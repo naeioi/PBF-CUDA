@@ -19,22 +19,6 @@ struct helper_duplicate {
 	thrust::tuple<T, T> operator()(const T t) { return thrust::make_tuple(t, t); }
 };
 
-struct getExtrema {
-	typedef thrust::pair<float3, float3> PFF;
-
-	__host__ __device__
-	getExtrema() {}
-
-	template <typename T> __device__
-	T operator()(T a, T b) { 
-		float3 &amax = thrust::get<0>(a), &amin = thrust::get<1>(a),
-			   &bmax = thrust::get<0>(b), &bmin = thrust::get<1>(b);
-		return thrust::make_tuple(
-			make_float3(fmaxf(amax.x, bmax.x), fmaxf(amax.y, bmax.y), fmaxf(amax.z, bmax.z)),
-			make_float3(fminf(amin.x, bmin.x), fminf(amin.y, bmin.y), fminf(amin.z, bmin.z)));
-	}
-};
-
 struct getGridxyz {
 	float3 llim;
 	float h;
@@ -45,9 +29,9 @@ struct getGridxyz {
 	__device__
 	int3 operator()(float3 pos) {
 		float3 diff = pos - llim;
-		int x = min(max((int)(diff.x / h), 0), gridDim.x), 
-			y = min(max((int)(diff.y / h), 0), gridDim.y), 
-			z = min(max((int)(diff.z / h), 0), gridDim.z);
+		int x = min(max((int)(diff.x / h), 0), gridDim.x - 1), 
+			y = min(max((int)(diff.y / h), 0), gridDim.y - 1), 
+			z = min(max((int)(diff.z / h), 0), gridDim.z - 1);
 		return make_int3(x, y, z);
 	}
 };
@@ -81,9 +65,9 @@ struct getGridId {
 	int operator()(T pos) {
 		float3 diff = pos - llim;
 		int x = diff.x / h, y = diff.y / h, z = diff.z / h;
-		x = min(max(x, 0), gridDim.x);
-		y = min(max(y, 0), gridDim.y);
-		z = min(max(z, 0), gridDim.z);
+		x = min(max(x, 0), gridDim.x - 1);
+		y = min(max(y, 0), gridDim.y - 1);
+		z = min(max(z, 0), gridDim.z - 1);
 		return (int)(x * gridDim.y * gridDim.z + y * gridDim.z + z);
 	}
 };
@@ -127,9 +111,9 @@ struct h_updatePosition {
 		float3 pos = thrust::get<0>(t), dpos = thrust::get<1>(t);
 		pos += dpos;
 		/* for now, project particles out of bound onto bounding box surface */
-		pos.x = fmaxf(fminf(pos.x, ulim.x), llim.x);
-		pos.y = fmaxf(fminf(pos.y, ulim.y), llim.y);
-		pos.z = fmaxf(fminf(pos.z, ulim.z), llim.z);
+		pos.x = fmaxf(fminf(pos.x, ulim.x - LIM_EPS), llim.x + LIM_EPS);
+		pos.y = fmaxf(fminf(pos.y, ulim.y - LIM_EPS), llim.y + LIM_EPS);
+		pos.z = fmaxf(fminf(pos.z, ulim.z - LIM_EPS), llim.z + LIM_EPS);
 
 		return pos;
 	}

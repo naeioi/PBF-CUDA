@@ -2,6 +2,8 @@
 #include <cooperative_groups.h>
 namespace cg = cooperative_groups;
 
+#define MI 966
+
 __global__ void advect_kernel(
 	uint* iids,
 	float3 *pos, float3 *npos, float3 *vel,
@@ -11,7 +13,8 @@ __global__ void advect_kernel(
 	if (i < nparticle) {
 		vel[i] += dt * g;
 		npos[i] = pos[i] + dt * vel[i];
-		//printf("#%-3d vel=(%.3f,%.3f,%.3f), pos=(%.3f,%.3f,%.3f)->(%.3f,%.3f,%.3f)\n", iids[i], expand(vel[i]), expand(pos[i]), expand(npos[i]));
+		if (0 && iids[i] == MI)
+			printf("#%-3d vel=(%.3f,%.3f,%.3f), pos=(%.3f,%.3f,%.3f)->(%.3f,%.3f,%.3f)\n", iids[i], expand(vel[i]), expand(pos[i]), expand(npos[i]));
 	}
 }
 
@@ -89,7 +92,6 @@ void computeLambda(
 
 #ifndef DEBUG_NO_HASH_GRID
 
-#define MI 49
 	uint starts[27], ends[27], nrange = 0;
 
 #pragma unroll 3
@@ -104,18 +106,21 @@ void computeLambda(
 				uint start = cellStarts[cellId], end = cellEnds[cellId];
 
 				if (start +1 < end && iid == MI) {
-					starts[nrange] = start;
-					ends[nrange] = end;
+					// starts[nrange] = start;
+					// ends[nrange] = end;
 					nrange++;
 				}
 
 				for (int j = start; j < end; j++) {
 					float3 d = cpos - pos[j];
 					float r2 = d.x * d.x + d.y * d.y + d.z * d.z;
-					//if (iid == MI) printf("#%-3d <~ #%-3d:(%f,%f,%f)\n", iid, iids[j], expand(pos[j]));
 					pho += h_poly6(h, r2);
 					grad = h_spikyGrad(h, d) / pho0;
 					gradi += grad;
+					if (0 && iid == MI) printf("#%-3d <~ #%-3d:(%f,%f,%f), pho=%.1f\n", iid, iids[j], expand(pos[j]), pho);
+					/* There is always a j equals to i in theory, but because hash grid is built once for multiple rounds of position correction, 
+					 * This is not guarenteed, and this leads to a wrong pho.
+					 */
 					if (j != i) {
 						gradj_l2 += grad.x * grad.x + grad.y * grad.y + grad.z * grad.z;
 					}
@@ -159,8 +164,9 @@ void computeLambda(
 	lambdas[i] = -(pho / pho0 - 1) / (grad_l2 + lambda_eps);
 	phos[i] = pho;
 
-	/*printf("#%-3d gradi=(%.3f,%.3f,%.3f), gradj_l2=%.3f, boundPho=%.3f, lambda=%.3f, pho=%.3f\n"
-		, iids[i], expand(gradi), gradj_l2, boundPho, lambdas[i], pho);*/
+	if (0 && iid == MI)
+		printf("#%-3d gradi=(%.3f,%.3f,%.3f), gradj_l2=%.3f, boundPho=%.3f, lambda=%.3f, pho=%.3f\n"
+			, iids[i], expand(gradi), gradj_l2, boundPho, lambdas[i], pho);
 }
 
 template <typename Func1, typename Func2>
@@ -179,6 +185,7 @@ void computetpos(
 	if (i >= n) return;
 	// if (i == 0) printf("(%f,%f,%f)\n", pos[i].x, pos[i].y, pos[i].z);
 
+	uint iid = iids[i];
 	int3 ind = posToCellxyz(pos[i]);
 	float lambda = lambdas[i];
 	float3 d = make_float3(0.f, 0.f, 0.f), cpos = pos[i];
@@ -194,13 +201,23 @@ void computetpos(
 				int cellId = cellxyzToId(x, y, z);
 				uint start = cellStarts[cellId], end = cellEnds[cellId];
 				for (int j = start; j < end; j++) if (j != i) {
-					float3 p = cpos - pos[j];
+					float3 p = cpos - pos[j], dd;
 					float corr = coef_corr * powf(h_poly6(h, norm2(p)), n_corr);
-					d += (lambda + lambdas[j] + corr) * h_spikyGrad(h, p);
+					dd = (lambda + lambdas[j] + corr) * h_spikyGrad(h, p);
+					d += dd;
+					/* BUG */
+					/*if (isfinite(dd.x))
+						d += dd;*/
 
-					if (0 && i == 0) {
-						printf("Particle #%d(%f,%f,%f) is #0's neighbor\n", j, expand(pos[j]));
-					}
+					/*if (iid == MI) {
+						printf("Particle #%d(%f,%f,%f) is #0's neighbor, d=(%.3f,%.3f,%.3f), corr=%.3f, spikyGrad=%.3f\n", j, expand(pos[j]), expand(d), corr, h_spikyGrad(h, p));
+					}*/
+					/*if (iid == MI) {
+						printf("Particle #%d(%f,%f,%f) is #0's neighbor, d=(%.3f,%.3f,%.3f)\n", j, expand(pos[j]), expand(d));
+					}*/
+					/*if (iid == MI) {
+						printf("corr=%.3f, spikyGrad=%.3f\n", corr, h_spikyGrad(h, p));
+					}*/
 				}
 			}
 		}
@@ -221,13 +238,14 @@ void computetpos(
 	// dpos[i] = d / pho0;
 	
 	d = clamp3f(d / pho0, -MAX_DP, MAX_DP);
-	//printf("#%-3d pos=(%.3f,%.3f,%.3f)+(%.3f,%.3f,%.3f)=(%.3f,%.3f,%.3f)\n", iids[i], expand(cpos), expand(d), expand(cpos+d));
+	if (0 && iid == MI)
+		printf("#%-3d pos=(%.3f,%.3f,%.3f)+(%.3f,%.3f,%.3f)=(%.3f,%.3f,%.3f)\n", iids[i], expand(cpos), expand(d), expand(cpos+d));
 
 	cpos += d;
 
-	cpos.x = max(min(cpos.x, ulim.x), llim.x);
-	cpos.y = max(min(cpos.y, ulim.y), llim.y);
-	cpos.z = max(min(cpos.z, ulim.z), llim.z);
+	cpos.x = max(min(cpos.x, ulim.x - LIM_EPS), llim.x + LIM_EPS);
+	cpos.y = max(min(cpos.y, ulim.y - LIM_EPS), llim.y + LIM_EPS);
+	cpos.z = max(min(cpos.z, ulim.z - LIM_EPS), llim.z + LIM_EPS);
 	tpos[i] = cpos;
 }
 
@@ -268,7 +286,7 @@ void computeXSPH(
 	}
 
 	nvel[i] = vel[i] + c_XSPH * avel;
-	if (0) {
+	if (0 && iids[i] == MI) {
 		printf("#%-3d nvel=(%f,%f,%f), vel=(%f,%f,%f)\n", iids[i], expand(nvel[i]), expand(vel[i]));
 	}
 }
