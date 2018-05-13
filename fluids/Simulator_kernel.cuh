@@ -12,7 +12,7 @@ __global__ void advect_kernel(
 	int i = __mul24(blockIdx.x, blockDim.x) + threadIdx.x;
 	if (i < nparticle) {
 		vel[i] += dt * g;
-		npos[i] = pos[i] + dt * vel[i];
+		npos[i] = pos[i] + dt * vel[i];	
 		if (0 && iids[i] == MI)
 			printf("#%-3d vel=(%.3f,%.3f,%.3f), pos=(%.3f,%.3f,%.3f)->(%.3f,%.3f,%.3f)\n", iids[i], expand(vel[i]), expand(pos[i]), expand(npos[i]));
 	}
