@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "Shader.h"
 #include "Input.h"
+#include "SSFRenderer.h"
 
 #include "FluidParams.h"
 #include <GLFW\glfw3.h>
@@ -13,7 +14,13 @@ class SimpleRenderer :
 	public Renderer
 {
 public:
-	SimpleRenderer(const FluidParams &params, float3 ulim, float3 llim, std::function<void()> nextCb) : m_ulim(ulim), m_llim(llim), m_nextFrameBtnCb(nextCb) { init(params); };
+	SimpleRenderer(
+		const FluidParams &params, 
+		const glm::vec3 &cam_pos, 
+		const glm::vec3 &cam_focus, 
+		float3 ulim, float3 llim, 
+		std::function<void()> nextCb) 
+		: m_ulim(ulim), m_llim(llim), m_nextFrameBtnCb(nextCb) { init(params, cam_pos, cam_focus); };
 	~SimpleRenderer();
 
 	void render(uint pos, uint iid, int m_nparticle);
@@ -21,7 +28,7 @@ public:
 	Input *m_input;
 private:
 
-	void init(const FluidParams&);
+	void init(const FluidParams&, const glm::vec3 &cam_pos, const glm::vec3 &cam_focus);
 	void __binding();
 	void __render();
 	void __processInput();
@@ -42,6 +49,8 @@ private:
 	uint d_pos, d_iid;
 	/* bounding box */
 	float3 m_llim, m_ulim;
+
+	SSFRenderer *m_SSFrenderer;
 
 	/* Renderer states */
 	Camera *m_camera;

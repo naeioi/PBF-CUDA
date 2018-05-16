@@ -1,6 +1,8 @@
 #include "FluidSystem.h"
 #include "FixedCubeSource.h"
 #include "FluidParams.h"
+#include <glm/common.hpp>
+using namespace glm;
 
 FluidSystem::FluidSystem()
 {
@@ -18,13 +20,14 @@ FluidSystem::FluidSystem()
 	fluidParams.k_corr = 0.001f,
 	fluidParams.n_corr = 4,
 	fluidParams.k_boundaryDensity = 0.f,
-	fluidParams.c_XSPH = 0.f;
+	fluidParams.c_XSPH = 0.5f;
 	fluidParams.niter = 4;
 
 	const float3 ulim = make_float3(1.f, 1.f, 2.f), llim = make_float3(-1.f, -1.f, 0.f);
+	const glm::vec3 cam_pos(1.f, -5.f, 2.f), cam_focus(0, 0, 1.5f);
 
 	m_simulator = new Simulator(fluidParams, ulim, llim);
-	m_renderer = new SimpleRenderer(fluidParams, ulim, llim, [this]() { m_nextFrame = true; });
+	m_renderer = new SimpleRenderer(fluidParams, cam_pos, cam_focus, ulim, llim, [this]() { m_nextFrame = true; });
 	m_source = new FixedCubeSource(
 		/* limits */  make_float3(.5f, .5f, 1.8f), make_float3(.0f, 0.f, .5f),
 		/* numbers */ make_int3(40, 10, 20));

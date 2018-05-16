@@ -7,6 +7,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <exception>
+#include <fstream>
+using namespace std;
 
 Shader* Shader::current = nullptr;
 
@@ -63,6 +65,27 @@ Shader::Shader(const char* vshader, const char* fshader)
 	// delete the shaders as they're linked into our program now and no longer necessery
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
+}
+
+Shader::Shader(const Filename & vfile, const Filename & ffile)
+{
+	string vcode, fcode;
+
+	{
+		ifstream fin(vfile.path);
+		stringstream ss;
+		ss << fin.rdbuf();
+		vcode = ss.str();
+	}
+
+	{
+		ifstream fin(ffile.path);
+		stringstream ss;
+		ss << fin.rdbuf();
+		fcode = ss.str();
+	}
+
+	*this = Shader(vcode.c_str(), fcode.c_str());
 }
 
 

@@ -2,12 +2,18 @@
 #include "Shader.h"
 #include <glm/glm.hpp>
 
+struct ProjectionInfo {
+	float l, r;
+	float t, b;
+	float n, f;
+};
+
 class Camera
 {
 public:
 	Camera();
 	/* Specify only camera position and looks at origin */
-	Camera(const glm::vec3 &pos, float aspect);
+	Camera(const glm::vec3 &pos, const glm::vec3 &focus, float aspect);
 	Camera(const glm::vec3 &pos, const glm::vec3 front, const glm::vec3 up, float fov, float aspect);
 	~Camera();
 
@@ -28,6 +34,8 @@ public:
 	 * This convection makes camera rotation work properly.
 	 */
 	const glm::vec3& getFront() const { return front;  }
+
+	ProjectionInfo getProjectionInfo() const;
 
 private:
 	glm::vec3 pos;

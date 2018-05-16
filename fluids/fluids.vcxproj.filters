@@ -3,6 +3,7 @@
   <ItemGroup>
     <CudaCompile Include="Simulator.cu" />
     <CudaCompile Include="Simulator_kernel.cuh" />
+    <CudaCompile Include="SSFRenderer.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FluidSystem.cpp" />
@@ -145,6 +146,8 @@
       <Filter>nanovg</Filter>
     </ClInclude>
     <ClInclude Include="FluidParams.h" />
+    <ClInclude Include="SSFRenderer.cuh" />
+    <ClInclude Include="SSFRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shaders">
@@ -156,5 +159,27 @@
     <Filter Include="nanovg">
       <UniqueIdentifier>{2a166ad6-6e15-4d0a-b618-fb5c5d774f85}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SSFget_depth_vertex.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="SSFget_depth_fragment.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="SSFput_depth_vertex.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="SSFput_depth_fragment.glsl">
+      <Filter>shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="fragment.glsl">
+      <Filter>shaders</Filter>
+    </Text>
+    <Text Include="vertex.glsl">
+      <Filter>shaders</Filter>
+    </Text>
   </ItemGroup>
 </Project>

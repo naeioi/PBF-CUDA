@@ -9,9 +9,9 @@ Camera::Camera()
 {
 }
 
-Camera::Camera(const glm::vec3 & pos, float aspect)
+Camera::Camera(const glm::vec3 & pos, const glm::vec3 &focus, float aspect)
 {
-	glm::vec3 front(glm::vec3(0.f, 0.f, 1.5f) - pos), up = glm::vec3(0.f, 0.f, 1.f);
+	glm::vec3 front(focus - pos), up = glm::vec3(0.f, 0.f, 1.f);
 	up = glm::cross(front, glm::cross(up, front));
 	*this = Camera(pos, front, up, 60.f, aspect);
 }
@@ -91,4 +91,9 @@ void Camera::zoom(float dy)
 		pos -= front * Input::SCREEN_SCROLL_RATE;
 		front += front * Input::SCREEN_SCROLL_RATE;
 	}
+}
+
+ProjectionInfo Camera::getProjectionInfo() const
+{
+	return ProjectionInfo();
 }

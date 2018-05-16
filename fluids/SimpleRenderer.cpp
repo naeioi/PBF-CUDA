@@ -9,7 +9,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 
 
-void SimpleRenderer::init(const FluidParams &params) {
+void SimpleRenderer::init(const FluidParams &params, const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) {
 
 	m_width = WINDOW_WIDTH;
 	m_height = WINDOW_HEIGHT;
@@ -96,16 +96,18 @@ void SimpleRenderer::init(const FluidParams &params) {
 	m_gui_screen->performLayout();
 	// nanoWin->center();
 
+	/* SSFRenderer */
+	// m_SSFrenderer = new SSFRenderer(m_camera, WINDOW_WIDTH, WINDOW_HEIGHT);
+
 	__binding();
 
 	/* Resource allocation in constructor */
-	glm::vec3 pos(1.f, -5.f, 2.f);
 	float aspect = (float)WINDOW_WIDTH / WINDOW_HEIGHT;
 
-	m_camera = new Camera(pos, aspect);
+	m_camera = new Camera(cam_pos, cam_focus, aspect);
 	/* This will loaded shader from shader/simple.cpp automatically */
 	m_box_shader = new Shader(box_vshader, box_fshader);
-	m_particle_shader = new Shader(particle_vshader, particle_fshader);
+	m_particle_shader = new Shader(Filename("vertex.glsl"), Filename("fragment.glsl"));
 
 	glGenVertexArrays(1, &d_vao);
 	glGenVertexArrays(1, &d_bbox_vao);
