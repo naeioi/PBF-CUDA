@@ -1,22 +1,15 @@
 #pragma once
-#include "helper.h"
 #include "Shader.h"
 #include "Camera.h"
-#include <GLFW\glfw3.h>
+#include "helper.h"
 
-class SSFRenderer
+struct SSFRendererImpl
 {
-public:
-	SSFRenderer(Camera *camera, int width, int height);
-	~SSFRenderer();
+	SSFRendererImpl(Camera *camera, int width, int height);
 
-	// void initialize(uint p_vao, int nparticle);
 	void destroy();
 
 	void render(uint p_vao, int nparticle);
-
-private: 
-
 	void __render();
 
 	int m_width, m_height;
@@ -36,5 +29,6 @@ private:
 	Shader *m_s_get_depth, *m_s_put_depth;
 	Camera *m_camera;
 	ProjectionInfo m_pi;
+
 };
 

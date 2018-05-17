@@ -3,7 +3,7 @@
   <ItemGroup>
     <CudaCompile Include="Simulator.cu" />
     <CudaCompile Include="Simulator_kernel.cuh" />
-    <CudaCompile Include="SSFRenderer.cu" />
+    <CudaCompile Include="SSFRendererImpl.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FluidSystem.cpp" />
@@ -113,6 +113,7 @@
     <ClCompile Include="..\common\nanovg\src\nanovg.c">
       <Filter>nanovg</Filter>
     </ClCompile>
+    <ClCompile Include="SSFRenderer.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FluidSystem.h" />
@@ -146,8 +147,8 @@
       <Filter>nanovg</Filter>
     </ClInclude>
     <ClInclude Include="FluidParams.h" />
-    <ClInclude Include="SSFRenderer.cuh" />
     <ClInclude Include="SSFRenderer.h" />
+    <ClInclude Include="SSFRendererImpl.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shaders">

@@ -73,6 +73,7 @@ Shader::Shader(const Filename & vfile, const Filename & ffile)
 
 	{
 		ifstream fin(vfile.path);
+		if (!fin) fexit(-1, (string("File to open ") + vfile.path).c_str());
 		stringstream ss;
 		ss << fin.rdbuf();
 		vcode = ss.str();
@@ -80,6 +81,7 @@ Shader::Shader(const Filename & vfile, const Filename & ffile)
 
 	{
 		ifstream fin(ffile.path);
+		if (!fin) fexit(-1, (string("File to open ") + ffile.path).c_str());
 		stringstream ss;
 		ss << fin.rdbuf();
 		fcode = ss.str();

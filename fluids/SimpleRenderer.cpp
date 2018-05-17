@@ -96,9 +96,6 @@ void SimpleRenderer::init(const FluidParams &params, const glm::vec3 &cam_pos, c
 	m_gui_screen->performLayout();
 	// nanoWin->center();
 
-	/* SSFRenderer */
-	// m_SSFrenderer = new SSFRenderer(m_camera, WINDOW_WIDTH, WINDOW_HEIGHT);
-
 	__binding();
 
 	/* Resource allocation in constructor */
@@ -108,6 +105,10 @@ void SimpleRenderer::init(const FluidParams &params, const glm::vec3 &cam_pos, c
 	/* This will loaded shader from shader/simple.cpp automatically */
 	m_box_shader = new Shader(box_vshader, box_fshader);
 	m_particle_shader = new Shader(Filename("vertex.glsl"), Filename("fragment.glsl"));
+
+	/* SSFRenderer */
+	m_SSFrenderer = new SSFRenderer(m_camera, WINDOW_WIDTH, WINDOW_HEIGHT);
+	printf("new SSFRenderer()\n");
 
 	glGenVertexArrays(1, &d_vao);
 	glGenVertexArrays(1, &d_bbox_vao);
