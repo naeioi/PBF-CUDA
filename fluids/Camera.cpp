@@ -95,5 +95,13 @@ void Camera::zoom(float dy)
 
 ProjectionInfo Camera::getProjectionInfo() const
 {
-	return ProjectionInfo();
+	ProjectionInfo i;
+	float tanHalfFov = tan(glm::radians(fov) * 0.5f);
+	i.n = 0.1f;
+	i.f = 100.f;
+	i.t = tanHalfFov * i.n;
+	i.b = -i.t;
+	i.r = aspect * i.t;
+	i.l = -i.r;
+	return i;
 }

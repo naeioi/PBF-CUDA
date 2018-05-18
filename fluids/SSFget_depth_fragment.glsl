@@ -5,7 +5,13 @@ out vec4 FragColor;
 out float gl_FragDepth;
 
 void main() {
-	/* Nothing because only depth is needed */
-	// gl_FragDepth = 0;
-	FragColor = vec4(1, 0, 0, 1);
+
+	float x = 2 * gl_PointCoord.x - 1;
+	float y = 2 * gl_PointCoord.y - 1;
+	float pho = x * x + y * y;
+	float z = sqrt(1 - pho);
+	if (pho > 1) discard;
+
+	// gl_FragDepth = -clipPos.z;
+	// FragColor = vec4(1, 0, 0, 1);
 }

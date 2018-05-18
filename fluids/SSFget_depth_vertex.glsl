@@ -9,9 +9,8 @@ uniform float pointRadius;
 out vec4 clipPos;
 
 void main() {
-	vec4 eyePos = view * vec4(aPos, 1.0);
-	float dist = length(vec3(eyePos));
+	clipPos = view * vec4(aPos, 1.0);
+	float dist = length(vec3(clipPos));
 	gl_PointSize = pointRadius / dist;
-	gl_Position = proj * eyePos;
-	clipPos = gl_Position;
+	gl_Position = proj * clipPos;
 }
