@@ -107,7 +107,7 @@ void SimpleRenderer::init(const FluidParams &params, const glm::vec3 &cam_pos, c
 	m_particle_shader = new Shader(Filename("vertex.glsl"), Filename("fragment.glsl"));
 
 	/* SSFRenderer */
-	m_SSFrenderer = new SSFRenderer(m_camera, WINDOW_WIDTH, WINDOW_HEIGHT);
+	m_SSFrenderer = new SSFRenderer(m_camera, width_, height_);
 	printf("new SSFRenderer()\n");
 
 	glGenVertexArrays(1, &d_vao);
@@ -227,7 +227,7 @@ void SimpleRenderer::__render() {
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (m_particle_shader->loaded()) {
+	/*if (m_particle_shader->loaded()) {
 		m_particle_shader->use();
 		m_camera->use(Shader::now());
 
@@ -237,7 +237,9 @@ void SimpleRenderer::__render() {
 		m_particle_shader->setUnif("hlIndex", m_input->hlIndex);
 		glBindVertexArray(d_vao);
 		glDrawArrays(GL_POINTS, 0, m_nparticle);
-	}
+	}*/
+
+	m_SSFrenderer->render(d_vao, m_nparticle);
 
 	if (m_box_shader->loaded()) {
 		m_box_shader->use();

@@ -30,6 +30,7 @@ inline float3 clamp3f(float3 u, float llim, float ulim) {
 void fexit(const int code = -1, const char* msg = nullptr);
 
 void checkGLErr();
+void checkFramebufferComplete();
 
 #define expand(p) p.x, p.y, p.z
 

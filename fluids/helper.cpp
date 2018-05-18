@@ -1,8 +1,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <glad/glad.h>
+#include "helper.h"
 
-void fexit(const int code = -1, const char* msg = nullptr) {
+void fexit(const int code, const char* msg) {
 	if (msg)
 		fprintf(stderr, msg);
 	return exit(code);
@@ -21,5 +22,29 @@ void checkGLErr() {
 		}
 		fprintf(stderr, "OpenGL Error #%d: %s\n", err, errString);
 		fexit(-1);
+	}
+}
+
+void checkFramebufferComplete()
+{
+	GLenum err = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	const char *errString = NULL;
+	switch (err) {
+	case GL_FRAMEBUFFER_UNDEFINED: errString = "GL_FRAMEBUFFER_UNDEFINED"; break;
+	case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: errString = "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT"; break;
+	case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: errString = "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT"; break;
+	case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER: errString = "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER"; break;
+	case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER: errString = "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER"; break;
+	case GL_FRAMEBUFFER_UNSUPPORTED: errString = "GL_FRAMEBUFFER_UNSUPPORTED"; break;
+	case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE: errString = "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE"; break;
+	case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS: errString = "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS"; break;
+	}
+
+	if (errString) {
+		fprintf(stderr, "OpenGL Framebuffer Error #%d: %s\n", err, errString);
+		fexit(-1);
+	}
+	else {
+		printf("Framebuffer complete check ok\n");
 	}
 }

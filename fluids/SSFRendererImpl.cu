@@ -1,3 +1,4 @@
+#include "helper.h"
 #include "SSFRendererImpl.h"
 #include <GLFW\glfw3.h>
 #include <glad\glad.h>
@@ -57,18 +58,30 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height)
 	checkCudaErrors(cudaGraphicsGLRegisterImage(&dc_normal, d_normal, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));*/
 
 	/* Allocate & Binding depth texture to framebuffer */
-	/*glGenFramebuffers(1, &d_fbo);
+	glGenFramebuffers(1, &d_fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
 	glBindTexture(GL_TEXTURE_2D, d_depth);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, d_depth, 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);*/
 
+	/* Attach one color buffer, this is mandatory */
+	uint colorTex;
+	glGenTextures(1, &colorTex);
+	glBindTexture(GL_TEXTURE_2D, colorTex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0);
+
+	checkFramebufferComplete();
+	checkGLErr();
 	fprintf(stderr, "flag4 SSFRendererImpl()\n");
 
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 	/* Load shaders */
-	/*m_s_get_depth = new Shader(Filename("SSFget_depth_vertex.glsl"), Filename("SSFget_depth_fragment.glsl"));
+	m_s_get_depth = new Shader(Filename("SSFget_depth_vertex.glsl"), Filename("SSFget_depth_fragment.glsl"));
 	fprintf(stderr, "break shader SSFRendererImpl()");
-	m_s_put_depth = new Shader(Filename("SSFput_depth_vertex.glsl"), Filename("SSFput_depth_fragment.glsl"));*/
+	m_s_put_depth = new Shader(Filename("SSFput_depth_vertex.glsl"), Filename("SSFput_depth_fragment.glsl"));
 
 	fprintf(stderr, "flag5 SSFRendererImpl()\n");
 
@@ -93,17 +106,27 @@ void SSFRendererImpl::destroy() {
 }
 
 void SSFRendererImpl::__render() {
-	glEnable(GL_DEPTH_TEST);
+
+	printf("__render()\n");
 
 	/* Render to framebuffer */
+	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
+
 	m_s_get_depth->use();
 	m_camera->use(Shader::now());
 	m_s_get_depth->setUnif("pointRadius", 50.f);
 
+	glEnable(GL_DEPTH_TEST);
 	glBindVertexArray(p_vao);
-	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		fexit(-1, "Framebuffer not complete\n");
+
+	glClear(GL_DEPTH_BUFFER_BIT);
 	glDrawArrays(GL_POINTS, 0, m_nparticle);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	printf("Render to framebuffer\n");
 
 	/* Draw depth in greyscale */
 	m_s_put_depth->use();
@@ -113,6 +136,8 @@ void SSFRendererImpl::__render() {
 	glBindTexture(GL_TEXTURE_2D, d_depth);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glEnable(GL_DEPTH_TEST);
+
+	printf("Render quad\n");
 }
 
 void SSFRendererImpl::render(uint p_vao, int nparticle) {
