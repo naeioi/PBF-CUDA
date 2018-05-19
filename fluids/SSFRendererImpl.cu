@@ -19,6 +19,8 @@ static float quadVertices[] = { // vertex attributes for a quad that fills the e
 
 SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height)
 {
+	m_niter = 4;
+
 	/* TODO: consider how to handle resolution change */
 	this->m_camera = camera;
 	this->m_width = width;
@@ -54,10 +56,13 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height)
 	checkGLErr();
 
 	/* TODO: Bind texture to CUDA resource */
-	checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_normal_D, d_normal_D, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
-	/* CUDA does not support interop with GL_DEPTH_COMPONENT texture ! */
-	checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_depth, d_depth_r, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
-	checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_H, d_H, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
+	//checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_normal_D, d_normal_D, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
+	/* CUDA does not support interop with GL_DEPTH_COMPONENT texture ! 
+	 * As a workaround, first render to a depth texture (d_depth)
+	 * then copy depth texture to a color texture (d_depth_r), which contains only red channel 
+	 */
+	//checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_depth, d_depth_r, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
+	//checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_H, d_H, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
 
 	/* Allocate framebuffer & Binding depth texture */
 	glGenFramebuffers(1, &d_fbo);
@@ -80,9 +85,9 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	/* Load shaders */
-	m_s_get_depth = new Shader(Filename("SSFget_depth_vertex.glsl"), Filename("SSFget_depth_fragment.glsl"));
-	fprintf(stderr, "break shader SSFRendererImpl()");
-	m_s_put_depth = new Shader(Filename("SSFput_depth_vertex.glsl"), Filename("SSFput_depth_fragment.glsl"));
+	m_s_get_depth = new Shader(Filename("SSFget_depth.v.glsl"), Filename("SSFget_depth.f.glsl"));
+	m_s_put_depth = new Shader(Filename("SSFput_depth.v.glsl"), Filename("SSFput_depth.f.glsl"));
+	m_s_restore_normal = new Shader(Filename("SSFrestore_normal.v.glsl"), Filename("SSFrestore_normal.f.glsl"));
 
 	/* Load quad vao */
 	uint quad_vbo;
@@ -121,6 +126,7 @@ void SSFRendererImpl::renderDepth() {
 	glDrawArrays(GL_POINTS, 0, m_nparticle);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	/* Copy depth into a color texture */
 	glCopyImageSubData(
 		d_depth, GL_TEXTURE_2D, 0, 0, 0, 0,
 		d_depth_r, GL_TEXTURE_2D, 0, 0, 0, 0,
@@ -151,6 +157,15 @@ void SSFRendererImpl::render(uint p_vao, int nparticle) {
 	this->m_nparticle = nparticle;
 
 	renderDepth();
+
+	// mapResources();
+	for (int i = 0; i < m_niter; i++) {
+		restoreNormal();
+		computeH();
+		updateDepth();
+	}
+	// unmapResources();
+
 	renderPlane();
 }
 
@@ -171,4 +186,30 @@ void SSFRendererImpl::unmapResources() {
 	checkCudaErrors(cudaGraphicsUnmapResources(1, &dcr_H, 0));
 
 	/* TODO: check if need unregister resource using cudaGraphicsUnregisterResource() */
+}
+
+void SSFRendererImpl::restoreNormal() {
+	/*int block_size = 256;
+	int grid_size = ceilDiv(m_nparticle, block_size);*/
+
+	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
+
+	m_s_restore_normal->use();
+	m_camera->use(Shader::now());
+
+	glDisable(GL_DEPTH_TEST);
+	glBindVertexArray(m_quad_vao);
+
+	glBindTexture(GL_TEXTURE_2D, d_depth_r);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void SSFRendererImpl::computeH() {
+	int block_size = 256;
+	int grid_size = ceilDiv(m_nparticle, block_size);
+}
+
+void SSFRendererImpl::updateDepth() {
+	int block_size = 256;
+	int grid_size = ceilDiv(m_nparticle, block_size);
 }

@@ -16,6 +16,7 @@ struct SSFRendererImpl
 	void updateDepth();
 	void renderPlane();
 
+	int m_niter;
 	int m_width, m_height;
 	/* particle vertex array object */
 	uint p_vao;
@@ -38,6 +39,7 @@ struct SSFRendererImpl
 	void unmapResources();
 
 	Shader *m_s_get_depth, *m_s_put_depth;
+	Shader *m_s_restore_normal, *m_s_computeH, *m_s_update_depth;
 	Camera *m_camera;
 	ProjectionInfo m_pi;
 
