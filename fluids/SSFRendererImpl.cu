@@ -25,31 +25,41 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height)
 	this->m_height = height;
 	this->m_pi = camera->getProjectionInfo();
 
-	/* Allocate depth / position / normal texture */
-	glGenTextures(1, &d_pos);
+	/* Allocate depth / normal_D / H texture */
 	glGenTextures(1, &d_depth);
-	glGenTextures(1, &d_normal);
+	glGenTextures(1, &d_depth_r);
+	glGenTextures(1, &d_normal_D);
+	glGenTextures(1, &d_H);
 
-	glBindTexture(GL_TEXTURE_2D, d_pos);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RED, GL_FLOAT, NULL);
+	glBindTexture(GL_TEXTURE_2D, d_normal_D);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	/* TODO: check effect of GL_NEAREST */
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	checkGLErr();
 	glBindTexture(GL_TEXTURE_2D, d_depth);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glBindTexture(GL_TEXTURE_2D, d_normal);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RED, GL_FLOAT, NULL);
+	checkGLErr();
+	glBindTexture(GL_TEXTURE_2D, d_depth_r);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	checkGLErr();
+	glBindTexture(GL_TEXTURE_2D, d_H);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	checkGLErr();
 
 	/* TODO: Bind texture to CUDA resource */
-	/*checkCudaErrors(cudaGraphicsGLRegisterImage(&dc_pos, d_pos, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
-	checkCudaErrors(cudaGraphicsGLRegisterImage(&dc_depth, d_pos, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
-	checkCudaErrors(cudaGraphicsGLRegisterImage(&dc_normal, d_normal, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));*/
+	checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_normal_D, d_normal_D, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
+	/* CUDA does not support interop with GL_DEPTH_COMPONENT texture ! */
+	checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_depth, d_depth_r, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
+	checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_H, d_H, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
 
-	/* Allocate & Binding depth texture to framebuffer */
+	/* Allocate framebuffer & Binding depth texture */
 	glGenFramebuffers(1, &d_fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
 	glBindTexture(GL_TEXTURE_2D, d_depth);
@@ -92,8 +102,7 @@ void SSFRendererImpl::destroy() {
 	/* TODO */
 }
 
-void SSFRendererImpl::__render() {
-
+void SSFRendererImpl::renderDepth() {
 	/* Render to framebuffer */
 	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
 
@@ -112,6 +121,15 @@ void SSFRendererImpl::__render() {
 	glDrawArrays(GL_POINTS, 0, m_nparticle);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	glCopyImageSubData(
+		d_depth, GL_TEXTURE_2D, 0, 0, 0, 0,
+		d_depth_r, GL_TEXTURE_2D, 0, 0, 0, 0,
+		m_width, m_height, 1);
+	checkGLErr();
+}
+
+void SSFRendererImpl::renderPlane() {
+
 	/* Draw depth in greyscale */
 	m_s_put_depth->use();
 	m_camera->use(Shader::now());
@@ -122,7 +140,7 @@ void SSFRendererImpl::__render() {
 
 	glDisable(GL_DEPTH_TEST);
 	glBindVertexArray(m_quad_vao);
-	glBindTexture(GL_TEXTURE_2D, d_depth);
+	glBindTexture(GL_TEXTURE_2D, d_depth_r);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glEnable(GL_DEPTH_TEST);
 }
@@ -132,5 +150,25 @@ void SSFRendererImpl::render(uint p_vao, int nparticle) {
 	this->p_vao = p_vao;
 	this->m_nparticle = nparticle;
 
-	__render();
+	renderDepth();
+	renderPlane();
+}
+
+void SSFRendererImpl::mapResources() {
+	checkCudaErrors(cudaGraphicsMapResources(1, &dcr_depth, 0));
+	checkCudaErrors(cudaGraphicsMapResources(1, &dcr_normal_D, 0));
+	checkCudaErrors(cudaGraphicsMapResources(1, &dcr_H, 0));
+
+	size_t size;
+	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)dc_depth, &size, dcr_depth));
+	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)dc_normal_D, &size, dcr_normal_D));
+	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)dc_H, &size, dcr_H));
+}
+
+void SSFRendererImpl::unmapResources() {
+	checkCudaErrors(cudaGraphicsUnmapResources(1, &dcr_depth, 0));
+	checkCudaErrors(cudaGraphicsUnmapResources(1, &dcr_normal_D, 0));
+	checkCudaErrors(cudaGraphicsUnmapResources(1, &dcr_H, 0));
+
+	/* TODO: check if need unregister resource using cudaGraphicsUnregisterResource() */
 }

@@ -13,5 +13,5 @@ void main() {
 	if (pho > 1) discard;
 
 	// gl_FragDepth = -clipPos.z;
-	// FragColor = vec4(1, 0, 0, 1);
+	// FragColor = vec4(gl_FragCoord.z, 0, 0, 1);
 }

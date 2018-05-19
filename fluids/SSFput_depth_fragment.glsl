@@ -15,7 +15,7 @@ float linearizeDepth(float d) {
 void main() {
 
 	float depth = texture(depthTex, texCoord).x;
-	float ldepth = log(-linearizeDepth(depth));
+	float ldepth = -linearizeDepth(depth);
 	/* Make sure background not hidden. 
 	 * But depth value of background will still be overriden by quad 
 	 */
