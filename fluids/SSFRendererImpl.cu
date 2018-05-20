@@ -36,23 +36,23 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height)
 	glBindTexture(GL_TEXTURE_2D, d_normal_D);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	/* TODO: check effect of GL_NEAREST */
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	checkGLErr();
 	glBindTexture(GL_TEXTURE_2D, d_depth);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	checkGLErr();
 	glBindTexture(GL_TEXTURE_2D, d_depth_r);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	checkGLErr();
 	glBindTexture(GL_TEXTURE_2D, d_H);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	checkGLErr();
 
 	/* TODO: Bind texture to CUDA resource */
@@ -78,6 +78,10 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0);
+	
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, d_depth_r, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, d_normal_D, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, d_H, 0);
 
 	checkFramebufferComplete();
 	checkGLErr();
@@ -88,6 +92,7 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height)
 	m_s_get_depth = new Shader(Filename("SSFget_depth.v.glsl"), Filename("SSFget_depth.f.glsl"));
 	m_s_put_depth = new Shader(Filename("SSFput_depth.v.glsl"), Filename("SSFput_depth.f.glsl"));
 	m_s_restore_normal = new Shader(Filename("SSFrestore_normal.v.glsl"), Filename("SSFrestore_normal.f.glsl"));
+	m_s_computeH = new Shader(Filename("SSFcomputeH.v.glsl"), Filename("SSFcomputeH.f.glsl"));
 
 	/* Load quad vao */
 	uint quad_vbo;
@@ -193,20 +198,63 @@ void SSFRendererImpl::restoreNormal() {
 	int grid_size = ceilDiv(m_nparticle, block_size);*/
 
 	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
+	glDisable(GL_BLEND);
 
 	m_s_restore_normal->use();
 	m_camera->use(Shader::now());
 
-	glDisable(GL_DEPTH_TEST);
-	glBindVertexArray(m_quad_vao);
+	ProjectionInfo i = m_camera->getProjectionInfo();
+	m_s_restore_normal->setUnif("p_n", i.n);
+	m_s_restore_normal->setUnif("p_f", i.f);
+	m_s_restore_normal->setUnif("p_t", i.t);
+	m_s_restore_normal->setUnif("p_r", i.r);
+	m_s_restore_normal->setUnif("s_w", (float)m_width);
+	m_s_restore_normal->setUnif("s_h", (float)m_height);
 
+	glDisable(GL_DEPTH_TEST);
+
+	GLenum bufs[] = { GL_COLOR_ATTACHMENT2 /* d_normal_D */ };
+	glDrawBuffers(1, bufs);
+	
+	glBindVertexArray(m_quad_vao);
 	glBindTexture(GL_TEXTURE_2D, d_depth_r);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glEnable(GL_BLEND);
 }
 
 void SSFRendererImpl::computeH() {
-	int block_size = 256;
-	int grid_size = ceilDiv(m_nparticle, block_size);
+	/*int block_size = 256;
+	int grid_size = ceilDiv(m_nparticle, block_size);*/
+	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
+	glDisable(GL_BLEND);
+
+	m_s_computeH->use();
+	m_camera->use(Shader::now());
+
+	ProjectionInfo i = m_camera->getProjectionInfo();
+	m_s_computeH->setUnif("p_n", i.n);
+	m_s_computeH->setUnif("p_f", i.f);
+	m_s_computeH->setUnif("p_t", i.t);
+	m_s_computeH->setUnif("p_r", i.r);
+	m_s_computeH->setUnif("s_w", (float)m_width);
+	m_s_computeH->setUnif("s_h", (float)m_height);
+
+	glDisable(GL_DEPTH_TEST);
+
+	GLenum bufs[] = { GL_COLOR_ATTACHMENT3 /* d_H */ };
+	glDrawBuffers(1, bufs);
+
+	glBindVertexArray(m_quad_vao);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, d_depth_r);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, d_normal_D);
+	
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glEnable(GL_BLEND);
 }
 
 void SSFRendererImpl::updateDepth() {

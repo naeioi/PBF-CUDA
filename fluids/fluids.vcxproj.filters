@@ -4,6 +4,7 @@
     <CudaCompile Include="Simulator.cu" />
     <CudaCompile Include="Simulator_kernel.cuh" />
     <CudaCompile Include="SSFRendererImpl.cu" />
+    <CudaCompile Include="SSFRenderer.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FluidSystem.cpp" />
@@ -113,7 +114,6 @@
     <ClCompile Include="..\common\nanovg\src\nanovg.c">
       <Filter>nanovg</Filter>
     </ClCompile>
-    <ClCompile Include="SSFRenderer.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FluidSystem.h" />
@@ -162,16 +162,28 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="SSFget_depth_vertex.glsl">
+    <None Include="SSFget_depth.f.glsl">
       <Filter>shaders</Filter>
     </None>
-    <None Include="SSFget_depth_fragment.glsl">
+    <None Include="SSFget_depth.v.glsl">
       <Filter>shaders</Filter>
     </None>
-    <None Include="SSFput_depth_vertex.glsl">
+    <None Include="SSFput_depth.f.glsl">
       <Filter>shaders</Filter>
     </None>
-    <None Include="SSFput_depth_fragment.glsl">
+    <None Include="SSFput_depth.v.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="SSFrestore_normal.v.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="SSFrestore_normal.f.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="SSFcomputeH.v.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="SSFcomputeH.f.glsl">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>
