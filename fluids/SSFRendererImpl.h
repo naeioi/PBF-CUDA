@@ -21,6 +21,8 @@ struct SSFRendererImpl
 	/* particle vertex array object */
 	uint p_vao;
 	int m_nparticle;
+	/* Depth update ratio */
+	float m_k; 
 
 	uint m_quad_vao;
 
@@ -29,10 +31,10 @@ struct SSFRendererImpl
 	/* depth / pos / normal texture */
 	uint d_depth, d_depth_r, d_normal_D, d_H;
 	/* Cuda resources to map/unmap texture */
-	struct cudaGraphicsResource *dcr_depth, *dcr_normal_D, *dcr_H;
+	//struct cudaGraphicsResource *dcr_depth, *dcr_normal_D, *dcr_H;
 
-	texture<float, cudaTextureType2D, cudaReadModeElementType> *dc_depth, *dc_H;
-	texture<float4, cudaTextureType2D, cudaReadModeElementType> *dc_normal_D;
+	/*texture<float, cudaTextureType2D, cudaReadModeElementType> *dc_depth, *dc_H;
+	texture<float4, cudaTextureType2D, cudaReadModeElementType> *dc_normal_D;*/
 
 	/* Helper function to map/unmap above textures */
 	void mapResources();

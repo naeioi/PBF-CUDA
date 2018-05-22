@@ -18,13 +18,8 @@ uniform sampler2D zTex;
 float l_n;
 float f_x, f_y, c_x, c_y, c_x2, c_y2;
 
-float linearize(float d) {
-	float f = p_f, n = p_n;
-	return l_n / (d * (f - n) - (f + n));
-}
-
 float getZ(float x, float y) {
-	return -linearize(texture(zTex, vec2(x, y)).x);
+	return texture(zTex, vec2(x, y)).x;
 }
 
 void main() {

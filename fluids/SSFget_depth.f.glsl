@@ -1,8 +1,16 @@
 # version 330 core
 
-in vec4 clipPos;
+uniform float p_n;
+uniform float p_f;
+
+in vec4 viewPos;
+in vec4 projPos;
 out vec4 FragColor;
-out float gl_FragDepth;
+
+float linearize(float d) {
+	float f = p_f, n = p_n;
+	return 2 * f * n / (d * (f - n) - (f + n));
+}
 
 void main() {
 
@@ -12,6 +20,7 @@ void main() {
 	float z = sqrt(1 - pho);
 	if (pho > 1) discard;
 
-	// gl_FragDepth = -clipPos.z;
-	// FragColor = vec4(gl_FragCoord.z, 0, 0, 1);
+	// gl_FragCoord.z is NOT projPos.x / projPos.w!
+	// FragColor.r = -linearize(projPos.z / projPos.w);
+	FragColor.r = -viewPos.z;
 }

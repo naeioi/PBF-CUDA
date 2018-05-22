@@ -3,8 +3,8 @@
   <ItemGroup>
     <CudaCompile Include="Simulator.cu" />
     <CudaCompile Include="Simulator_kernel.cuh" />
-    <CudaCompile Include="SSFRendererImpl.cu" />
     <CudaCompile Include="SSFRenderer.cu" />
+    <CudaCompile Include="SSFRendererImpl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FluidSystem.cpp" />
@@ -184,6 +184,12 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="SSFcomputeH.f.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="SSFupdate_depth.v.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="SSFupdate_depth.f.glsl">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

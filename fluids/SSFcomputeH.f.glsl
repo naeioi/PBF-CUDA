@@ -19,13 +19,8 @@ uniform sampler2D normalDTex;
 float l_n;
 float f_x, f_y, c_x, c_y;
 
-float linearize(float d) {
-	float f = p_f, n = p_n;
-	return l_n / (d * (f - n) - (f + n));
-}
-
 float getZ(float x, float y) {
-	return -linearize(texture(zTex, vec2(x, y)).x);
+	return texture(zTex, vec2(x, y)).x;
 }
 
 vec3 getN(float x, float y) {

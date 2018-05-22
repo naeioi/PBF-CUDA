@@ -106,7 +106,6 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   <ItemGroup>
     <CudaCompile Include="Simulator.cu" />
     <CudaCompile Include="SSFRenderer.cu" />
-    <CudaCompile Include="SSFRendererImpl.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\nanovg\src\fontstash.h" />
@@ -177,6 +176,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="shader\simple.cpp" />
     <ClCompile Include="SimpleRenderer.cpp" />
     <ClCompile Include="Simulator.cpp" />
+    <ClCompile Include="SSFRendererImpl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="vertex.glsl">
@@ -201,6 +201,8 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <None Include="SSFput_depth.v.glsl" />
     <None Include="SSFrestore_normal.f.glsl" />
     <None Include="SSFrestore_normal.v.glsl" />
+    <None Include="SSFupdate_depth.f.glsl" />
+    <None Include="SSFupdate_depth.v.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
