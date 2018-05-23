@@ -7,6 +7,7 @@ uniform float p_t;
 uniform float p_r;
 
 uniform sampler2D zTex;
+uniform sampler2D normalDTex;
 out vec4 FragColor;
 
 float proj(float ze) {
@@ -22,5 +23,5 @@ void main() {
 	gl_FragDepth = 0.5 * (gl_DepthRange.diff * z_ndc + gl_DepthRange.far + gl_DepthRange.near);
 	float log_ze = log(ze);
 	// FragColor = vec4(log_ze, log_ze, log_ze, 1.0);
-	FragColor = vec4(ze, ze, ze, 1.0);
+	FragColor = vec4(texture(normalDTex, texCoord).xyz, 1.0);
 }

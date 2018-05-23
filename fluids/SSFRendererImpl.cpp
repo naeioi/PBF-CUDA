@@ -164,7 +164,14 @@ void SSFRendererImpl::renderPlane() {
 
 	glEnable(GL_DEPTH_TEST);
 	glBindVertexArray(m_quad_vao);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, d_depth_r);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, d_normal_D);
+
+	m_s_put_depth->setUnif("zTex", 0);
+	m_s_put_depth->setUnif("normalDTex", 1);
+
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	// glDisable(GL_DEPTH_TEST);
 }

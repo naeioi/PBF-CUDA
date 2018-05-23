@@ -8,9 +8,9 @@ uniform int s_h;
 uniform float p_t;
 uniform float p_n;
 uniform float r;
-uniform float pointRadius;
 
 out vec4 viewPos;
+out vec4 projPos;
 
 void main() {
 	viewPos = view * vec4(aPos, 1.0);
@@ -20,5 +20,6 @@ void main() {
 	 * NOT RADIUS BUT DIAMETER  
 	 */
 	gl_Position = proj * viewPos;
+	projPos = proj * viewPos;
 	gl_PointSize = r*p_n*s_h / (gl_Position.z * p_t);
 }
