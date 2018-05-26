@@ -7,9 +7,16 @@
 #include <nanogui\nanogui.h>
 #include <glm/common.hpp>
 #include <glm/gtx/rotate_vector.hpp>
+#include <stb.h>
 
+extern float SKYBOX_VERTICES[];
+static uint loadCubemap(char **faces);
 
 void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) {
+
+	m_draw_sky = true;
+	m_draw_fluid = true;
+	m_draw_bbox = true;
 
 	m_width = WINDOW_WIDTH;
 	m_height = WINDOW_HEIGHT;
@@ -123,17 +130,40 @@ void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) 
 	m_box_shader = new Shader(box_vshader, box_fshader);
 	m_particle_shader = new Shader(Filename("vertex.glsl"), Filename("fragment.glsl"));
 
+	/* Load skybox */
+	char *sky_faces[] = { 
+		"skybox/right.jpg",		/* +x */
+		"skybox/left.jpg",		/* -x */
+		"skybox/front.jpg",		/* +y */
+		"skybox/back.jpg",		/* -y */
+		"skybox/top.jpg",		/* +z */
+		"skybox/bottom.jpg"		/* -z */
+	};
+	d_sky_texture = loadCubemap(sky_faces);
+	m_sky_shader = new Shader(Filename("sky.v.glsl"), Filename("sky.f.glsl"));
+
 	/* SSFRenderer */
 	m_SSFrenderer = new SSFRenderer(m_camera, width_, height_);
 	printf("new SSFRenderer()\n");
 
+	/* Allow space for d_vao, d_bbox_vao, d_sky_vao */
 	glGenVertexArrays(1, &d_vao);
 	glGenVertexArrays(1, &d_bbox_vao);
-
+	glGenVertexArrays(1, &d_sky_vao);
+	
+	/* Bind bbox vbo to vao */
 	glGenBuffers(1, &d_bbox_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, d_bbox_vbo);
 	glBufferData(GL_ARRAY_BUFFER, 12 * 2 * 3 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
 	glBindVertexArray(d_bbox_vao);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	
+	/* Bind sky vbo to vao */
+	glGenBuffers(1, &d_sky_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, d_sky_vbo);
+	glBufferData(GL_ARRAY_BUFFER, 6 * 2 * 3 * 3 * sizeof(float), SKYBOX_VERTICES, GL_STATIC_DRAW);
+	glBindVertexArray(d_sky_vao);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 }
@@ -244,21 +274,38 @@ void SimpleRenderer::__render() {
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	/*if (m_particle_shader->loaded()) {
+	if (m_draw_sky) {
+		/* Sky */
+		glDepthMask(GL_FALSE);
+		m_sky_shader->use();
+		m_camera->use(Shader::now(), true);
+
+		glBindVertexArray(d_sky_vao);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, d_sky_texture);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		glDepthMask(GL_TRUE);
+	}
+
+	if (!m_draw_fluid && m_particle_shader->loaded()) {
+		/* Particle */
 		m_particle_shader->use();
 		m_camera->use(Shader::now());
 
 		m_particle_shader->setUnif("color", glm::vec4(1.f, 0.f, 0.f, .1f));
-		m_particle_shader->setUnif("pointRadius", m_input->fluidParams.h);
+		m_particle_shader->setUnif("pointRadius", GUIParams::getInstance().h);
 		m_particle_shader->setUnif("pointScale", 500.f);
 		m_particle_shader->setUnif("hlIndex", m_input->hlIndex);
 		glBindVertexArray(d_vao);
 		glDrawArrays(GL_POINTS, 0, m_nparticle);
-	}*/
+	}
+	else if (m_draw_fluid) {
+		/* Fluid */
+		m_SSFrenderer->render(d_vao, m_nparticle);
+	}
 
-	m_SSFrenderer->render(d_vao, m_nparticle);
-
-	if (m_box_shader->loaded()) {
+	if (m_draw_bbox && m_box_shader->loaded()) {
+		/* Bounding box */
 		m_box_shader->use();
 		m_camera->use(Shader::now());
 
@@ -330,4 +377,35 @@ void SimpleRenderer::render(uint pos, uint iid, int nparticle) {
 		glfwSwapBuffers(m_window);
 	}
 	else fexit(0);
+}
+
+static uint loadCubemap(char **faces) {
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+	int width, height, nrChannels;
+	for (unsigned int i = 0; i < 6; i++)
+	{
+		unsigned char *data = stbi_load(faces[i], &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+				0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+			);
+			stbi_image_free(data);
+		}
+		else
+		{
+			std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+			stbi_image_free(data);
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return textureID;
 }

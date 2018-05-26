@@ -22,9 +22,10 @@ FluidSystem::FluidSystem()
 	params.k_boundaryDensity = 0.f,
 	params.c_XSPH = 0.5f;
 	params.niter = 4;
-	params.kernel_r = 3;
-	params.sigma_r = 3;
-	params.sigma_z = 0.1;
+	params.smooth_niter = 2;
+	params.kernel_r = 10.f;
+	params.sigma_r = 6.f;
+	params.sigma_z = 0.1f;
 
 	const float3 ulim = make_float3(1.f, 1.f, 2.f), llim = make_float3(-1.f, -1.f, 0.f);
 	const glm::vec3 cam_pos(1.f, -5.f, 2.f), cam_focus(0, 0, 1.5f);

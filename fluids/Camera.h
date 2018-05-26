@@ -17,7 +17,7 @@ public:
 	Camera(const glm::vec3 &pos, const glm::vec3 front, const glm::vec3 up, float fov, float aspect);
 	~Camera();
 
-	void use(const Shader &shader) const;
+	void use(const Shader &shader, bool translate_invariant = false) const;
 	void setAspect(float aspect);
 	void setPos(const glm::vec3 &pos);
 	void setFront(const glm::vec3 &front);

@@ -210,7 +210,7 @@ void SSFRendererImpl::shading() {
 	m_s_shading->setUnif("zTex", 0);
 	m_s_shading->setUnif("normalDTex", 1);
 
-	glClear(GL_COLOR_BUFFER_BIT);
+	// glClear(GL_COLOR_BUFFER_BIT);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
@@ -364,6 +364,8 @@ void SSFRendererImpl::smoothDepth()
 	m_s_smooth_depth->setUnif("zB", 1);
 
 	m_s_smooth_depth->setUnif("kernel_r", m_kernel_r);
+	m_s_smooth_depth->setUnif("blur_r", m_blur_r);
+	m_s_smooth_depth->setUnif("blur_z", m_blur_z);
 
 	glDisable(GL_DEPTH_TEST);
 	glBindVertexArray(m_quad_vao);

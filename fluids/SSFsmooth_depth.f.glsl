@@ -65,6 +65,6 @@ void main() {
 	float z = getZ(x, y);
 	if (z > 99) return;
 
-	float zz = gaussian(x, y);
+	float zz = bilateral(x, y);
 	setZ(x, y, zz);
 }

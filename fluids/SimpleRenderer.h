@@ -66,5 +66,16 @@ private:
 	double m_dvar = 1.23456;
 
 	int frameCount = 0;
+
+	/* Cubemap */
+	uint d_sky_texture;
+	Shader *m_sky_shader;
+	uint d_sky_vao, d_sky_vbo;
+
+	/* Rendering options */
+	bool m_draw_sky;
+	/* If false, draw particle as sphere instead */
+	bool m_draw_fluid;
+	bool m_draw_bbox;
 };
 

@@ -32,9 +32,12 @@ Camera::~Camera()
 {
 }
 
-void Camera::use(const Shader & shader) const
+void Camera::use(const Shader & shader, bool translate_invariant) const
 {
 	glm::mat4 view = glm::lookAt(pos, pos + front, up);
+	if (translate_invariant) {
+		view = glm::mat4(glm::mat3(view));
+	}
 	glm::mat4 pers = glm::perspective(glm::radians(fov), aspect, 0.1f, 100.f);
 	shader.setUnif("view", view);
 	shader.setUnif("proj", pers);

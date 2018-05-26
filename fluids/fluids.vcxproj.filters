@@ -115,6 +115,7 @@
     </ClCompile>
     <ClCompile Include="SSFRendererImpl.cpp" />
     <ClCompile Include="GUIParams.cpp" />
+    <ClCompile Include="StaticVertices.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FluidSystem.h" />
@@ -197,6 +198,12 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="SSFsmooth_depth.f.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="sky.v.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="sky.f.glsl">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>
