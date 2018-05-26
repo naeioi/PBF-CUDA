@@ -63,6 +63,7 @@ private:
 	/* NanoGUI */
 	nanogui::Screen *m_gui_screen;
 	nanogui::FormHelper *m_gui_form;
+	nanogui::Window *m_gui_win;
 	std::function<void()> m_nextFrameBtnCb;
 	double m_dvar = 1.23456;
 

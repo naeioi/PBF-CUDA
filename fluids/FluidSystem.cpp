@@ -33,7 +33,7 @@ FluidSystem::FluidSystem()
 	m_simulator = new Simulator(params, ulim, llim);
 	m_renderer = new SimpleRenderer(cam_pos, cam_focus, ulim, llim, [this]() { m_nextFrame = true; });
 	m_source = new FixedCubeSource(
-		/* limits */  make_float3(.5f, .5f, 1.8f), make_float3(.0f, 0.f, .5f),
+		/* limits */  make_float3(.5f, .5f, 1.8f), make_float3(-.5f, -.5f, .8f),
 		/* numbers */ make_int3(40, 10, 20));
 	m_nparticle = 40 * 10 * 20;
 

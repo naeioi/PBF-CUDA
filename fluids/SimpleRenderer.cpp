@@ -75,7 +75,7 @@ void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) 
 	glfwSwapBuffers(m_window);
 
 	m_gui_form = new nanogui::FormHelper(m_gui_screen);
-	nanogui::ref<nanogui::Window> nanoWin = m_gui_form->addWindow(Eigen::Vector2i(30, 50), "Parameters");
+	m_gui_win = m_gui_form->addWindow(Eigen::Vector2i(30, 50), "Parameters");
 
 	GUIParams &params = GUIParams::getInstance();
 	m_gui_form->addVariable("# Frame", m_input->frameCount)->setEditable(false);
@@ -209,7 +209,11 @@ void SimpleRenderer::__mouse_move_callback(GLFWwindow* window, double xpos, doub
 }
 
 void SimpleRenderer::__key_callback(GLFWwindow *w, int key, int scancode, int action, int mods) {
-	m_gui_screen->keyCallbackEvent(key, scancode, action, mods);
+	if (key == GLFW_KEY_V && action == GLFW_RELEASE) {
+		m_gui_win->setVisible(!m_gui_win->visible());
+	}
+	else 
+		m_gui_screen->keyCallbackEvent(key, scancode, action, mods);
 }
 
 void SimpleRenderer::__mouse_scroll_callback(GLFWwindow *w, float dx, float dy) {

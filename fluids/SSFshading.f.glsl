@@ -49,12 +49,19 @@ void shading_fresnel() {
 	vec3 e = normalize(-getPos());
 	float r = r0 + (1 - r0)*pow(1 - dot(n, e), 5);
 	
-	vec3 view_ref = -e + 2 * n * dot(n, e);
-	vec3 world_ref = mat3(iview) * view_ref;
-	FragColor = texture(skyTex, world_ref);
-	// FragColor = vec4(normalize(world_ref), 1);
-	// FragColor = vec4(n, 1);
-	// FragColor = vec4(abs(getPos()), 1);
+	vec3 view_reflect = -e + 2 * n * dot(n, e);
+	vec3 world_reflect = mat3(iview) * view_reflect;
+
+	vec3 view_refract = -e;
+	vec3 world_refract = mat3(iview) * view_refract;
+
+	vec3 reflect_color = texture(skyTex, world_reflect).xyz;
+	vec3 refract_color = texture(skyTex, world_refract- 0.1*n).xyz;
+
+	vec3 tint_color = vec3(6, 105, 217) / 256;
+	refract_color = mix(tint_color, refract_color, 0.8);
+
+	FragColor = vec4(mix(refract_color, reflect_color, r), 1);
 }
 
 void main() {
