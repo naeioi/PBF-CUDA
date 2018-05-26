@@ -21,5 +21,5 @@ void main() {
 	 */
 	gl_Position = proj * viewPos;
 	projPos = proj * viewPos;
-	gl_PointSize = r*p_n*s_h / (gl_Position.z * p_t);
+	gl_PointSize = r*p_n*s_h / (-viewPos.z * p_t);
 }

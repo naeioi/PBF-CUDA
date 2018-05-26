@@ -5,6 +5,7 @@
 #include <cuda_runtime.h>
 #include <helper_cuda.h>
 #include <cuda_gl_interop.h>
+#include "GUIParams.h"
 
 static float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
     // positions   // texCoords
@@ -19,8 +20,8 @@ static float quadVertices[] = { // vertex attributes for a quad that fills the e
 
 SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height)
 {
-	m_k = 1.f;
-	m_niter = 1;
+	m_ab = 0;
+	loadParams();
 
 	/* TODO: consider how to handle resolution change */
 	this->m_camera = camera;
@@ -30,7 +31,8 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height)
 
 	/* Allocate depth / normal_D / H texture */
 	glGenTextures(1, &d_depth);
-	glGenTextures(1, &d_depth_r);
+	glGenTextures(1, &d_depth_a);
+	glGenTextures(1, &d_depth_b);
 	glGenTextures(1, &d_normal_D);
 	glGenTextures(1, &d_H);
 
@@ -45,7 +47,12 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	checkGLErr();
-	glBindTexture(GL_TEXTURE_2D, d_depth_r);
+	glBindTexture(GL_TEXTURE_2D, d_depth_a);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	checkGLErr();
+	glBindTexture(GL_TEXTURE_2D, d_depth_b);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -60,9 +67,9 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height)
 	//checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_normal_D, d_normal_D, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
 	/* CUDA does not support interop with GL_DEPTH_COMPONENT texture ! 
 	 * As a workaround, first render to a depth texture (d_depth)
-	 * then copy depth texture to a color texture (d_depth_r), which contains only red channel 
+	 * then copy depth texture to a color texture (d_depth_a), which contains only red channel 
 	 */
-	//checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_depth, d_depth_r, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
+	//checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_depth, d_depth_a, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
 	//checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_H, d_H, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
 
 	/* Allocate framebuffer & Binding depth texture */
@@ -70,10 +77,10 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height)
 	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
 	glBindTexture(GL_TEXTURE_2D, d_depth);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, d_depth, 0);
-	
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, d_depth_r, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, d_normal_D, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, d_H, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, d_depth_a, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, d_depth_b, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, d_normal_D, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, d_H, 0);
 
 	checkFramebufferComplete();
 	checkGLErr();
@@ -82,10 +89,11 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height)
 
 	/* Load shaders */
 	m_s_get_depth = new Shader(Filename("SSFget_depth.v.glsl"), Filename("SSFget_depth.f.glsl"));
-	m_s_put_depth = new Shader(Filename("SSFput_depth.v.glsl"), Filename("SSFput_depth.f.glsl"));
+	m_s_shading = new Shader(Filename("SSFshading.v.glsl"), Filename("SSFshading.f.glsl"));
 	m_s_restore_normal = new Shader(Filename("SSFrestore_normal.v.glsl"), Filename("SSFrestore_normal.f.glsl"));
 	m_s_computeH = new Shader(Filename("SSFcomputeH.v.glsl"), Filename("SSFcomputeH.f.glsl"));
 	m_s_update_depth = new Shader(Filename("SSFupdate_depth.v.glsl"), Filename("SSFupdate_depth.f.glsl"));
+	m_s_smooth_depth = new Shader(Filename("SSFsmooth_depth.v.glsl"), Filename("SSFsmooth_depth.f.glsl"));
 
 	/* Load quad vao */
 	uint quad_vbo;
@@ -105,9 +113,36 @@ void SSFRendererImpl::destroy() {
 	/* TODO */
 }
 
+void SSFRendererImpl::render(uint p_vao, int nparticle) {
+
+	this->p_vao = p_vao;
+	this->m_nparticle = nparticle;
+	loadParams();
+	m_ab = 0;
+
+	renderDepth();
+
+	// Algo 1. Compute H and update depth
+	/*for (int i = 0; i < m_niter; i++) {
+	restoreNormal();
+	computeH();
+	updateDepth();
+	}*/
+
+	// Algo 2. Smooth filtering
+	for (int i = 0; i < m_niter; i++) {
+		/* Flip pingpong flag BEFORE each step */
+		m_ab = !m_ab;
+		smoothDepth();
+	}
+
+	restoreNormal();
+	shading();
+}
+
 void SSFRendererImpl::renderDepth() {
 	/* After renderDepth(), z_c is store at d_depth 
-	 * Linearize depth (z_e) is stored at d_depth_r  
+	 * Linearize depth (z_e) is stored at d_depth_a  
 	 */
 
 	/* Render to framebuffer */
@@ -116,24 +151,27 @@ void SSFRendererImpl::renderDepth() {
 
 	/* Reset depth_r to maximum */
 	GLfloat red[] = { 100.f };
-	glClearTexImage(d_depth_r, 0, GL_RED, GL_FLOAT, red);
+	glClearTexImage(d_depth_a, 0, GL_RED, GL_FLOAT, red);
+	checkGLErr();
+	glClearTexImage(d_depth_b, 0, GL_RED, GL_FLOAT, red);
 	checkGLErr();
 
 	/* Have to assign COLOR_ATTACHMENT0 to first drawbuffer
 	 * because later we assign COLOR_ATTACHMENT2 to first drawbuffer
 	 */
-	GLenum bufs[] = { GL_COLOR_ATTACHMENT0 /* d_depth_r */ };
+	GLenum bufs[] = { GL_COLOR_ATTACHMENT0 /* d_depth_a */ };
 	glDrawBuffers(1, bufs);
 
 	m_s_get_depth->use();
 	m_camera->use(Shader::now());
 
+	/* TODO: encapsulate uniforms into */
 	ProjectionInfo i = m_camera->getProjectionInfo();
 	m_s_get_depth->setUnif("s_h", m_height);
 	m_s_get_depth->setUnif("p_t", i.t);
 	m_s_get_depth->setUnif("p_n", i.n);
 	m_s_get_depth->setUnif("p_f", i.f);
-	m_s_get_depth->setUnif("r", 0.1f * 0.2f);
+	m_s_get_depth->setUnif("r", 0.1f * 0.5f);
 	m_s_get_depth->setUnif("pointRadius", 50.f);
 
 	glEnable(GL_DEPTH_TEST);
@@ -148,50 +186,42 @@ void SSFRendererImpl::renderDepth() {
 	glEnable(GL_BLEND);
 }
 
-void SSFRendererImpl::renderPlane() {
+void SSFRendererImpl::shading() {
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	/* Draw depth in greyscale */
-	m_s_put_depth->use();
+	m_s_shading->use();
 	m_camera->use(Shader::now());
 
 	ProjectionInfo i = m_camera->getProjectionInfo();
-	m_s_put_depth->setUnif("p_n", i.n);
-	m_s_put_depth->setUnif("p_f", i.f);
-	m_s_put_depth->setUnif("p_t", i.t);
-	m_s_put_depth->setUnif("p_r", i.r);
+	m_s_shading->setUnif("p_n", i.n);
+	m_s_shading->setUnif("p_f", i.f);
+	m_s_shading->setUnif("p_t", i.t);
+	m_s_shading->setUnif("p_r", i.r);
 
 	glEnable(GL_DEPTH_TEST);
 	glBindVertexArray(m_quad_vao);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, d_depth_r);
+	glBindTexture(GL_TEXTURE_2D, zTex2());
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, d_normal_D);
 
-	m_s_put_depth->setUnif("zTex", 0);
-	m_s_put_depth->setUnif("normalDTex", 1);
+	m_s_shading->setUnif("zTex", 0);
+	m_s_shading->setUnif("normalDTex", 1);
 
+	glClear(GL_COLOR_BUFFER_BIT);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
-	// glDisable(GL_DEPTH_TEST);
 }
 
-void SSFRendererImpl::render(uint p_vao, int nparticle) {
+void SSFRendererImpl::loadParams()
+{
+	const GUIParams &params = GUIParams::getInstance();
 
-	this->p_vao = p_vao;
-	this->m_nparticle = nparticle;
-
-	renderDepth();
-
-	// mapResources();
-	for (int i = 0; i < m_niter; i++) {
-		restoreNormal();
-		computeH();
-		// updateDepth();
-	}
-	// unmapResources();
-
-	renderPlane();
+	m_niter = params.smooth_niter;
+	m_kernel_r = params.kernel_r;
+	m_blur_r = 1 / params.sigma_r;
+	m_blur_z = 1 / params.sigma_z;
 }
 
 //void SSFRendererImpl::mapResources() {
@@ -231,11 +261,16 @@ void SSFRendererImpl::restoreNormal() {
 
 	glDisable(GL_DEPTH_TEST);
 
-	GLenum bufs[] = { GL_COLOR_ATTACHMENT1 /* d_normal_D */ };
+	GLfloat black[] = { 0.f, 0.f, 0.f, 0.f };
+	GLenum bufs[] = { GL_COLOR_ATTACHMENT2 /* d_normal_D */ };
 	glDrawBuffers(1, bufs);
-	
+	glClearTexImage(d_normal_D, 0, GL_RGBA, GL_FLOAT, black);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, zTex2());
+	m_s_restore_normal->setUnif("zTex", 0);
+
 	glBindVertexArray(m_quad_vao);
-	glBindTexture(GL_TEXTURE_2D, d_depth_r);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glEnable(GL_BLEND);
@@ -264,7 +299,7 @@ void SSFRendererImpl::computeH() {
 	glBindVertexArray(m_quad_vao);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, d_depth_r);
+	glBindTexture(GL_TEXTURE_2D, d_depth_a);
 	m_s_computeH->setUnif("zTex", 0);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, d_normal_D);
@@ -290,21 +325,48 @@ void SSFRendererImpl::updateDepth() {
 	m_s_update_depth->setUnif("zImg", 0);
 	m_s_update_depth->setUnif("k", m_k);
 
-	glBindImageTexture(0, d_depth_r, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+	glBindImageTexture(0, d_depth_a, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, d_H);
+
+	m_s_update_depth->setUnif("zImg", 0);
+	m_s_update_depth->setUnif("hTex", 1);
 
 	glDisable(GL_DEPTH_TEST);
 
-	GLenum bufs[] = { GL_COLOR_ATTACHMENT2 /* d_H */ };
-	glDrawBuffers(1, bufs);
-
 	glBindVertexArray(m_quad_vao);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, d_depth_r);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, d_normal_D);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glEnable(GL_BLEND);
+}
 
+void SSFRendererImpl::smoothDepth()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
+	glDisable(GL_BLEND);
+
+	m_s_smooth_depth->use();
+	m_camera->use(Shader::now());
+
+	ProjectionInfo i = m_camera->getProjectionInfo();
+	m_s_smooth_depth->setUnif("p_n", i.n);
+	m_s_smooth_depth->setUnif("p_f", i.f);
+	m_s_smooth_depth->setUnif("s_w", (int)m_width);
+	m_s_smooth_depth->setUnif("s_h", (int)m_height);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, zTex1());
+	glActiveTexture(GL_TEXTURE1);
+	glBindImageTexture(1, zTex2(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+
+	m_s_smooth_depth->setUnif("zA", 0);
+	m_s_smooth_depth->setUnif("zB", 1);
+
+	m_s_smooth_depth->setUnif("kernel_r", m_kernel_r);
+
+	glDisable(GL_DEPTH_TEST);
+	glBindVertexArray(m_quad_vao);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glEnable(GL_BLEND);

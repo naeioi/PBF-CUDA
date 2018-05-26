@@ -42,6 +42,7 @@ void main() {
 	float dzdx = getZ(x + dx, y) - z, dzdy = getZ(x, y+dy) - z;
 	float dzdx2 = z - getZ(x - dx, y), dzdy2 = z - getZ(x, y - dy);
 	
+	/* Skip silhouette */
 	if (abs(dzdx2) < abs(dzdx)) dzdx = dzdx2;
 	if (abs(dzdy2) < abs(dzdy)) dzdy = dzdy2;
 

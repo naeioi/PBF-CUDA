@@ -4,7 +4,6 @@
     <CudaCompile Include="Simulator.cu" />
     <CudaCompile Include="Simulator_kernel.cuh" />
     <CudaCompile Include="SSFRenderer.cu" />
-    <CudaCompile Include="SSFRendererImpl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FluidSystem.cpp" />
@@ -114,6 +113,8 @@
     <ClCompile Include="..\common\nanovg\src\nanovg.c">
       <Filter>nanovg</Filter>
     </ClCompile>
+    <ClCompile Include="SSFRendererImpl.cpp" />
+    <ClCompile Include="GUIParams.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FluidSystem.h" />
@@ -146,9 +147,9 @@
     <ClInclude Include="..\common\nanovg\src\stb_truetype.h">
       <Filter>nanovg</Filter>
     </ClInclude>
-    <ClInclude Include="FluidParams.h" />
     <ClInclude Include="SSFRenderer.h" />
     <ClInclude Include="SSFRendererImpl.h" />
+    <ClInclude Include="GUIParams.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shaders">
@@ -168,12 +169,6 @@
     <None Include="SSFget_depth.v.glsl">
       <Filter>shaders</Filter>
     </None>
-    <None Include="SSFput_depth.f.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="SSFput_depth.v.glsl">
-      <Filter>shaders</Filter>
-    </None>
     <None Include="SSFrestore_normal.v.glsl">
       <Filter>shaders</Filter>
     </None>
@@ -190,6 +185,18 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="SSFupdate_depth.f.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="SSFshading.f.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="SSFshading.v.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="SSFsmooth_depth.v.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="SSFsmooth_depth.f.glsl">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

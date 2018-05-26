@@ -5,7 +5,7 @@
 #include "Input.h"
 #include "SSFRenderer.h"
 
-#include "FluidParams.h"
+#include "GUIParams.h"
 #include <GLFW\glfw3.h>
 #include <nanogui\nanogui.h>
 #include <functional>
@@ -15,12 +15,11 @@ class SimpleRenderer :
 {
 public:
 	SimpleRenderer(
-		const FluidParams &params, 
 		const glm::vec3 &cam_pos, 
 		const glm::vec3 &cam_focus, 
 		float3 ulim, float3 llim, 
 		std::function<void()> nextCb) 
-		: m_ulim(ulim), m_llim(llim), m_nextFrameBtnCb(nextCb) { init(params, cam_pos, cam_focus); };
+		: m_ulim(ulim), m_llim(llim), m_nextFrameBtnCb(nextCb) { init(cam_pos, cam_focus); };
 	~SimpleRenderer();
 
 	void render(uint pos, uint iid, int m_nparticle);
@@ -28,7 +27,7 @@ public:
 	Input *m_input;
 private:
 
-	void init(const FluidParams&, const glm::vec3 &cam_pos, const glm::vec3 &cam_focus);
+	void init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus);
 	void __binding();
 	void __render();
 	void __processInput();

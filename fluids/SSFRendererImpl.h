@@ -5,6 +5,8 @@
 
 struct SSFRendererImpl
 {
+	enum { A = 0, B = 1 };
+
 	SSFRendererImpl(Camera *camera, int width, int height);
 
 	void destroy();
@@ -14,7 +16,10 @@ struct SSFRendererImpl
 	void restoreNormal();
 	void computeH();
 	void updateDepth();
-	void renderPlane();
+	void smoothDepth();
+	void shading();
+
+	void loadParams();
 
 	int m_niter;
 	int m_width, m_height;
@@ -28,10 +33,20 @@ struct SSFRendererImpl
 
 	/* framebuffer fluid rendered to */
 	uint d_fbo;
-	/* depth / pos / normal texture */
-	uint d_depth, d_depth_r, d_normal_D, d_H;
+	/* Pingpong flag */
+	bool m_ab; 
+	/* Depth texture of type GL_DEPTH_COMPONENT32F */
+	uint d_depth;
+	/* Pingpong depth texture of type GL_RED32F */
+	uint d_depth_a, d_depth_b;
+	/* normal & D in GL_RGBA32F */
+	uint d_normal_D;
+	/* curvature */
+	uint d_H;
 	/* Cuda resources to map/unmap texture */
 	//struct cudaGraphicsResource *dcr_depth, *dcr_normal_D, *dcr_H;
+	inline uint zTex1() { return m_ab ? d_depth_a : d_depth_b;  } /* Smooth source */
+	inline uint zTex2() { return m_ab ? d_depth_b : d_depth_a;  } /* Render source */
 
 	/*texture<float, cudaTextureType2D, cudaReadModeElementType> *dc_depth, *dc_H;
 	texture<float4, cudaTextureType2D, cudaReadModeElementType> *dc_normal_D;*/
@@ -40,8 +55,14 @@ struct SSFRendererImpl
 	void mapResources();
 	void unmapResources();
 
-	Shader *m_s_get_depth, *m_s_put_depth;
+	Shader *m_s_get_depth, *m_s_shading;
 	Shader *m_s_restore_normal, *m_s_computeH, *m_s_update_depth;
+
+	/* Bilateral filter */
+	float m_blur_r, m_blur_z;
+	int m_kernel_r;
+	Shader *m_s_smooth_depth;
+
 	Camera *m_camera;
 	ProjectionInfo m_pi;
 

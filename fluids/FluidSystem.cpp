@@ -1,6 +1,6 @@
 #include "FluidSystem.h"
 #include "FixedCubeSource.h"
-#include "FluidParams.h"
+#include "GUIParams.h"
 #include <glm/common.hpp>
 using namespace glm;
 
@@ -10,24 +10,27 @@ FluidSystem::FluidSystem()
 	m_nextFrame = false;
 
 	/* Initialize Component */
-	FluidParams fluidParams;
-	fluidParams.g = 9.8f,
-	fluidParams.h = .1f,
-	fluidParams.dt = 0.0083f,
-	fluidParams.pho0 = 8000.f,
-	fluidParams.lambda_eps = 1000.f,
-	fluidParams.delta_q = 0.3 * fluidParams.h,
-	fluidParams.k_corr = 0.001f,
-	fluidParams.n_corr = 4,
-	fluidParams.k_boundaryDensity = 0.f,
-	fluidParams.c_XSPH = 0.5f;
-	fluidParams.niter = 4;
+	GUIParams &params = GUIParams::getInstance();
+	params.g = 9.8f,
+	params.h = .1f,
+	params.dt = 0.0083f,
+	params.pho0 = 8000.f,
+	params.lambda_eps = 1000.f,
+	params.delta_q = 0.3 * params.h,
+	params.k_corr = 0.001f,
+	params.n_corr = 4,
+	params.k_boundaryDensity = 0.f,
+	params.c_XSPH = 0.5f;
+	params.niter = 4;
+	params.kernel_r = 3;
+	params.sigma_r = 3;
+	params.sigma_z = 0.1;
 
 	const float3 ulim = make_float3(1.f, 1.f, 2.f), llim = make_float3(-1.f, -1.f, 0.f);
 	const glm::vec3 cam_pos(1.f, -5.f, 2.f), cam_focus(0, 0, 1.5f);
 
-	m_simulator = new Simulator(fluidParams, ulim, llim);
-	m_renderer = new SimpleRenderer(fluidParams, cam_pos, cam_focus, ulim, llim, [this]() { m_nextFrame = true; });
+	m_simulator = new Simulator(params, ulim, llim);
+	m_renderer = new SimpleRenderer(cam_pos, cam_focus, ulim, llim, [this]() { m_nextFrame = true; });
 	m_source = new FixedCubeSource(
 		/* limits */  make_float3(.5f, .5f, 1.8f), make_float3(.0f, 0.f, .5f),
 		/* numbers */ make_int3(40, 10, 20));
@@ -72,7 +75,7 @@ void FluidSystem::stepSource() {
 void FluidSystem::stepSimulate() {
 	if (!(m_renderer->m_input->running || m_nextFrame)) return;
 
-	m_simulator->loadParams(m_renderer->m_input->fluidParams);
+	m_simulator->loadParams();
 
 	if (!m_tictoc)
 		m_simulator->step(d_pos, d_npos, d_vel, d_nvel, d_iid, m_nparticle);

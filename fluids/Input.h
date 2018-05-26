@@ -1,5 +1,5 @@
 #pragma once
-#include "FluidParams.h"
+#include "GUIParams.h"
 #include <glm/glm.hpp>
 
 struct Input {
@@ -17,10 +17,6 @@ struct Input {
 	bool last_mouse_valid;
 	bool running, lastFrame;
 
-	/* Simulation parameters */
-	FluidParams fluidParams;
-
-	glm::vec2 updateMousePos(double, double);
 	glm::vec2 updateMousePos(glm::vec2 mouse);
 	glm::vec2 getMouseDiff();
 	void reset();

@@ -9,7 +9,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 
 
-void SimpleRenderer::init(const FluidParams &params, const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) {
+void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) {
 
 	m_width = WINDOW_WIDTH;
 	m_height = WINDOW_HEIGHT;
@@ -31,7 +31,6 @@ void SimpleRenderer::init(const FluidParams &params, const glm::vec3 &cam_pos, c
 	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
 	m_input = new Input();
-	m_input->fluidParams = params;
 
 	m_window = glfwCreateWindow(m_width, m_height, "Fluid", nullptr, nullptr);
 	if (m_window == nullptr) {
@@ -71,19 +70,37 @@ void SimpleRenderer::init(const FluidParams &params, const glm::vec3 &cam_pos, c
 	m_gui_form = new nanogui::FormHelper(m_gui_screen);
 	nanogui::ref<nanogui::Window> nanoWin = m_gui_form->addWindow(Eigen::Vector2i(30, 50), "Parameters");
 
+	GUIParams &params = GUIParams::getInstance();
 	m_gui_form->addVariable("# Frame", m_input->frameCount)->setEditable(false);
-	m_gui_form->addVariable("# iterations", m_input->fluidParams.niter)->setSpinnable(true);
-	m_gui_form->addVariable("pho0", m_input->fluidParams.pho0)->setSpinnable(true);
-	m_gui_form->addVariable("g", m_input->fluidParams.g)->setSpinnable(true);
-	m_gui_form->addVariable("h", m_input->fluidParams.h)->setSpinnable(true);
-	m_gui_form->addVariable("dt", m_input->fluidParams.dt)->setSpinnable(true);
-	m_gui_form->addVariable("lambda_eps", m_input->fluidParams.lambda_eps)->setSpinnable(true);
-	m_gui_form->addVariable("delta_q", m_input->fluidParams.delta_q)->setSpinnable(true);
-	m_gui_form->addVariable("k_corr", m_input->fluidParams.k_corr)->setSpinnable(true);
-	m_gui_form->addVariable("n_corr", m_input->fluidParams.n_corr)->setSpinnable(true);
-	m_gui_form->addVariable("k_boundary", m_input->fluidParams.k_boundaryDensity)->setSpinnable(true);
-	m_gui_form->addVariable("c_XSPH", m_input->fluidParams.c_XSPH)->setSpinnable(true);
+	m_gui_form->addVariable("# Iter", params.niter)->setSpinnable(true);
+	m_gui_form->addVariable("pho0", params.pho0)->setSpinnable(true);
+	m_gui_form->addVariable("g", params.g)->setSpinnable(true);
+	m_gui_form->addVariable("h", params.h)->setSpinnable(true);
+	m_gui_form->addVariable("dt", params.dt)->setSpinnable(true);
+	m_gui_form->addVariable("lambda_eps", params.lambda_eps)->setSpinnable(true);
+	m_gui_form->addVariable("delta_q", params.delta_q)->setSpinnable(true);
+	m_gui_form->addVariable("k_corr", params.k_corr)->setSpinnable(true);
+	m_gui_form->addVariable("n_corr", params.n_corr)->setSpinnable(true);
+	m_gui_form->addVariable("k_boundary", params.k_boundaryDensity)->setSpinnable(true);
+	m_gui_form->addVariable("c_XSPH", params.c_XSPH)->setSpinnable(true);
 	m_gui_form->addVariable("Highlight #", m_input->hlIndex)->setSpinnable(true);
+	
+	auto smooth_niter = m_gui_form->addVariable("Smooth # Iter", params.smooth_niter); 
+	smooth_niter->setMinMaxValues(0, 60);
+	smooth_niter->setSpinnable(true);
+
+	auto kernel_r = m_gui_form->addVariable("kernel_r", params.kernel_r);
+	kernel_r->setMinMaxValues(0, 20);
+	kernel_r->setSpinnable(true);
+
+	auto sigma_r = m_gui_form->addVariable("sigma_r", params.sigma_r);
+	sigma_r->setMinMaxValues(0.f, 10.f);
+	sigma_r->setSpinnable(true);
+
+	auto sigma_z = m_gui_form->addVariable("sigma_z", params.sigma_z);
+	sigma_z->setMinMaxValues(0.f, 1.f);
+	sigma_z->setSpinnable(true);
+
 	m_gui_form->addButton("Next Frame", [this]() { m_nextFrameBtnCb();  });
 	auto runBtn = m_gui_form->addButton("Run", []() {});
 	runBtn->setFlags(nanogui::Button::ToggleButton);

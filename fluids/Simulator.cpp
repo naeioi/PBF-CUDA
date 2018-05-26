@@ -78,8 +78,9 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 	checkCudaErrors(cudaGraphicsUnregisterResource(dcr_nvel));
 }
 
-void Simulator::loadParams(const FluidParams & params)
+void Simulator::loadParams()
 {
+	const GUIParams & params = GUIParams::getInstance();
 	m_dt = params.dt;
 	m_gravity = params.g;
 	m_h = params.h;
@@ -93,7 +94,8 @@ void Simulator::loadParams(const FluidParams & params)
 	m_niter = params.niter;
 }
 
-void Simulator::saveParams(FluidParams &params) {
+void Simulator::saveParams() {
+	GUIParams &params = GUIParams::getInstance();
 	params.dt = m_dt;
 	params.g = m_gravity;
 	params.h = m_h;

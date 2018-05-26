@@ -1,15 +1,15 @@
 #pragma once
 #include "helper.h"
-#include "FluidParams.h"
+#include "GUIParams.h"
 #include <math.h>
 #include <helper_cuda.h>
 
 class Simulator
 {
 public:
-	Simulator(const FluidParams &params, float3 ulim, float3 llim) : m_ulim(ulim), m_llim(llim) {
+	Simulator(const GUIParams &params, float3 ulim, float3 llim) : m_ulim(ulim), m_llim(llim) {
 
-		loadParams(params);
+		loadParams();
 
 		checkCudaErrors(cudaMalloc(&dc_gridId, sizeof(uint) * MAX_PARTICLE_NUM));
 		checkCudaErrors(cudaMalloc(&dc_gridStart, sizeof(uint) * MAX_PARTICLE_NUM));
@@ -33,8 +33,8 @@ public:
 
 	/* TODO: may swap(d_pos, d_npos), i.e., the destination is assigned by Simulator, rather than caller */
 	void step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_iid, int nparticle);
-	void loadParams(const FluidParams &params);
-	void saveParams(FluidParams &params);
+	void loadParams();
+	void saveParams();
 private:
 	void advect();
 	void buildGridHash();
