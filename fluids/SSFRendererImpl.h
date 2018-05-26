@@ -7,7 +7,7 @@ struct SSFRendererImpl
 {
 	enum { A = 0, B = 1 };
 
-	SSFRendererImpl(Camera *camera, int width, int height);
+	SSFRendererImpl(Camera *camera, int width, int height, uint sky_texture);
 
 	void destroy();
 
@@ -62,6 +62,10 @@ struct SSFRendererImpl
 	float m_blur_r, m_blur_z;
 	int m_kernel_r;
 	Shader *m_s_smooth_depth;
+
+	/* Schlick's approximation on Fresnel law */
+	float m_r0;
+	uint d_sky;
 
 	Camera *m_camera;
 	ProjectionInfo m_pi;

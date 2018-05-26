@@ -36,6 +36,7 @@ public:
 	const glm::vec3& getFront() const { return front;  }
 
 	ProjectionInfo getProjectionInfo() const;
+	glm::mat4 getInverseView() const;
 
 private:
 	glm::vec3 pos;

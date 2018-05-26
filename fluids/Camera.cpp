@@ -108,3 +108,9 @@ ProjectionInfo Camera::getProjectionInfo() const
 	i.l = -i.r;
 	return i;
 }
+
+glm::mat4 Camera::getInverseView() const
+{
+	glm::mat4 view = glm::lookAt(pos, pos + front, up);
+	return glm::inverse(view);
+}

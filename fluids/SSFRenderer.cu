@@ -1,9 +1,9 @@
 #include "SSFRendererImpl.h"
 #include "SSFRenderer.h"
 
-SSFRenderer::SSFRenderer(Camera *camera, int width, int height)
+SSFRenderer::SSFRenderer(Camera *camera, int width, int height, uint sky_texture)
 {
-	m_impl = new SSFRendererImpl(camera, width, height);
+	m_impl = new SSFRendererImpl(camera, width, height, sky_texture);
 }
 
 

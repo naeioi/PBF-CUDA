@@ -142,10 +142,6 @@ void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) 
 	d_sky_texture = loadCubemap(sky_faces);
 	m_sky_shader = new Shader(Filename("sky.v.glsl"), Filename("sky.f.glsl"));
 
-	/* SSFRenderer */
-	m_SSFrenderer = new SSFRenderer(m_camera, width_, height_);
-	printf("new SSFRenderer()\n");
-
 	/* Allow space for d_vao, d_bbox_vao, d_sky_vao */
 	glGenVertexArrays(1, &d_vao);
 	glGenVertexArrays(1, &d_bbox_vao);
@@ -166,6 +162,9 @@ void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) 
 	glBindVertexArray(d_sky_vao);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	/* SSFRenderer */
+	m_SSFrenderer = new SSFRenderer(m_camera, width_, height_, d_sky_texture);
 }
 
 void SimpleRenderer::__window_size_callback(GLFWwindow* window, int width, int height) {

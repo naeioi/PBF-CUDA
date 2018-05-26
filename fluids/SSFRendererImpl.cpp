@@ -18,16 +18,22 @@ static float quadVertices[] = { // vertex attributes for a quad that fills the e
     1.0f,  1.0f,  1.0f, 1.0f
 };
 
-SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height)
+SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height, uint sky_texture)
 {
-	m_ab = 0;
 	loadParams();
+	{
+		float n1 = 1.3333f;
+		float t = (n1 - 1) / (n1 + 1);
+		m_r0 = t * t;
+	}
+	m_ab = 0;
 
 	/* TODO: consider how to handle resolution change */
 	this->m_camera = camera;
 	this->m_width = width;
 	this->m_height = height;
 	this->m_pi = camera->getProjectionInfo();
+	this->d_sky = sky_texture;
 
 	/* Allocate depth / normal_D / H texture */
 	glGenTextures(1, &d_depth);
@@ -193,12 +199,14 @@ void SSFRendererImpl::shading() {
 	/* Draw depth in greyscale */
 	m_s_shading->use();
 	m_camera->use(Shader::now());
+	m_s_shading->setUnif("iview", m_camera->getInverseView());
 
 	ProjectionInfo i = m_camera->getProjectionInfo();
 	m_s_shading->setUnif("p_n", i.n);
 	m_s_shading->setUnif("p_f", i.f);
 	m_s_shading->setUnif("p_t", i.t);
 	m_s_shading->setUnif("p_r", i.r);
+	m_s_shading->setUnif("r0", m_r0);
 
 	glEnable(GL_DEPTH_TEST);
 	glBindVertexArray(m_quad_vao);
@@ -206,9 +214,12 @@ void SSFRendererImpl::shading() {
 	glBindTexture(GL_TEXTURE_2D, zTex2());
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, d_normal_D);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, d_sky);
 
 	m_s_shading->setUnif("zTex", 0);
 	m_s_shading->setUnif("normalDTex", 1);
+	m_s_shading->setUnif("skyTex", 2);
 
 	// glClear(GL_COLOR_BUFFER_BIT);
 	glDrawArrays(GL_TRIANGLES, 0, 6);

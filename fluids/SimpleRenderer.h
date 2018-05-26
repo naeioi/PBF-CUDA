@@ -25,6 +25,7 @@ public:
 	void render(uint pos, uint iid, int m_nparticle);
 
 	Input *m_input;
+
 private:
 
 	void init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus);

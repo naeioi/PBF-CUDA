@@ -7,7 +7,7 @@ struct SSFRendererImpl;
 class SSFRenderer
 {
 public:
-	SSFRenderer(Camera *camera, int width, int height);
+	SSFRenderer(Camera *camera, int width, int height, uint sky_texture);
 	~SSFRenderer();
 
 	void destroy();
