@@ -42,3 +42,13 @@ float SKYBOX_VERTICES[] = {
 	-1.0f, -1.0f,  1.0f,
 	1.0f, -1.0f,  1.0f
 };
+
+float GROUND_VERTICES[] = {
+	/* position, tex coord */
+	-5.f, 5.f, 0.f, 0.f, 1.f,
+	-5.f, -5.f, 0.f, 0.f, 0.f,
+	5.f, -5.f, 0.f, 1.f, 0.f,
+	-5.f, 5.f, 0.f, 0.f, 1.f,
+	5.f, -5.f, 0.f, 1.f, 0.f,
+	5.f, 5.f, 0.f, 1.f, 1.f
+};

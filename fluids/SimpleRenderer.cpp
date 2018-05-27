@@ -10,6 +10,7 @@
 #include <stb.h>
 
 extern float SKYBOX_VERTICES[];
+extern float GROUND_VERTICES[];
 static uint loadCubemap(char **faces);
 
 void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) {
@@ -17,6 +18,7 @@ void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) 
 	m_draw_sky = true;
 	m_draw_fluid = true;
 	m_draw_bbox = true;
+	m_draw_ground = true;
 
 	m_width = WINDOW_WIDTH;
 	m_height = WINDOW_HEIGHT;
@@ -142,10 +144,14 @@ void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) 
 	d_sky_texture = loadCubemap(sky_faces);
 	m_sky_shader = new Shader(Filename("sky.v.glsl"), Filename("sky.f.glsl"));
 
+	/* Ground shader */
+	m_ground_shader = new Shader(Filename("ground.v.glsl"), Filename("ground.f.glsl"));
+
 	/* Allow space for d_vao, d_bbox_vao, d_sky_vao */
 	glGenVertexArrays(1, &d_vao);
 	glGenVertexArrays(1, &d_bbox_vao);
 	glGenVertexArrays(1, &d_sky_vao);
+	glGenVertexArrays(1, &d_ground_vao);
 	
 	/* Bind bbox vbo to vao */
 	glGenBuffers(1, &d_bbox_vbo);
@@ -162,6 +168,16 @@ void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) 
 	glBindVertexArray(d_sky_vao);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	/* Bind ground vbo to vao */
+	glGenBuffers(1, &d_ground_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, d_ground_vbo);
+	glBufferData(GL_ARRAY_BUFFER, 6 * 5 * sizeof(float), GROUND_VERTICES, GL_STATIC_DRAW);
+	glBindVertexArray(d_ground_vao);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	/* SSFRenderer */
 	m_SSFrenderer = new SSFRenderer(m_camera, width_, height_, d_sky_texture);
@@ -288,6 +304,15 @@ void SimpleRenderer::__render() {
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		glDepthMask(GL_TRUE);
+	}
+
+	if (m_draw_ground) {
+		/* Ground */
+		m_ground_shader->use();
+		m_camera->use(Shader::now());
+
+		glBindVertexArray(d_ground_vao);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 	}
 
 	if (!m_draw_fluid && m_particle_shader->loaded()) {

@@ -74,10 +74,15 @@ private:
 	Shader *m_sky_shader;
 	uint d_sky_vao, d_sky_vbo;
 
+	/* Ground */
+	uint d_ground_vao, d_ground_vbo;
+	Shader *m_ground_shader;
+
 	/* Rendering options */
 	bool m_draw_sky;
 	/* If false, draw particle as sphere instead */
 	bool m_draw_fluid;
 	bool m_draw_bbox;
+	bool m_draw_ground;
 };
 

@@ -206,6 +206,12 @@
     <None Include="sky.f.glsl">
       <Filter>shaders</Filter>
     </None>
+    <None Include="ground.v.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="ground.f.glsl">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="fragment.glsl">

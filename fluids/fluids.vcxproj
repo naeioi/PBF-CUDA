@@ -195,6 +195,8 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </Text>
   </ItemGroup>
   <ItemGroup>
+    <None Include="ground.f.glsl" />
+    <None Include="ground.v.glsl" />
     <None Include="sky.f.glsl" />
     <None Include="sky.v.glsl" />
     <None Include="SSFcomputeH.f.glsl" />
