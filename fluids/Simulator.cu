@@ -24,7 +24,7 @@ struct getGridxyz {
 	float h;
 	int3 gridDim;
 	__host__ __device__
-	getGridxyz(const float3 &llim, const int3 &gridDim, float h) : llim(llim), gridDim(gridDim), h(2.f * h) {}
+	getGridxyz(const float3 &llim, const int3 &gridDim, float h) : llim(llim), gridDim(gridDim), h(h) {}
 
 	__device__
 	int3 operator()(float3 pos) {
@@ -59,7 +59,7 @@ struct getGridId {
 	float h;
 	int3 gridDim;
 	__host__ __device__
-	getGridId(const float3 &llim, const int3 &gridDim, float h) : llim(llim), gridDim(gridDim), h(2.f * h) {}
+	getGridId(const float3 &llim, const int3 &gridDim, float h) : llim(llim), gridDim(gridDim), h(h) {}
 
 	template <typename T> __device__
 	int operator()(T pos) {
@@ -180,7 +180,7 @@ void Simulator::buildGridHash()
 	thrust::device_ptr<uint> d_gridId(dc_gridId), d_iid(dc_iid);
 
 	float3 diff = m_ulim - m_llim;
-	m_gridHashDim = make_int3((int)ceilf(.5f * diff.x / m_h), (int)ceilf(.5f * diff.y / m_h), (int)ceilf(.5f * diff.z / m_h));
+	m_gridHashDim = make_int3((int)ceilf(diff.x / m_h), (int)ceilf(diff.y / m_h), (int)ceilf(diff.z / m_h));
 	/* Compute gridId for each particle */
 	thrust::transform(
 		d_npos, d_npos + m_nparticle,
