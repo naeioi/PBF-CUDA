@@ -36,21 +36,21 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 
 	/* Real upper and lowe limit after advection */
 	static int round = 0;
-	fprintf(stderr, "-- Round %d --\n", round++);
+	// fprintf(stderr, "-- Round %d --\n", round++);
 	advect();
 	
-	cudaDeviceSynchronize();
-	printf("advect() done.\n");
+	// cudaDeviceSynchronize();
+	// printf("advect() done.\n");
 
 	buildGridHash();
 
-	cudaDeviceSynchronize();
-	printf("buildGridHash() done.\n");
+	// cudaDeviceSynchronize();
+	// printf("buildGridHash() done.\n");
 
 	for (uint i = 0; i < m_niter; i++) {
-		printf("== Iter %d ==\n", i);
+		// printf("== Iter %d ==\n", i);
 		correctDensity();
-		cudaDeviceSynchronize();
+		// cudaDeviceSynchronize();
 	}
 
 	/* update Velocity */

@@ -77,7 +77,7 @@ void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) 
 	glfwSwapBuffers(m_window);
 
 	m_gui_form = new nanogui::FormHelper(m_gui_screen);
-	m_gui_win = m_gui_form->addWindow(Eigen::Vector2i(30, 50), "Parameters");
+	m_gui_win = m_gui_form->addWindow(Eigen::Vector2i(30, 30), "Parameters");
 
 	GUIParams &params = GUIParams::getInstance();
 	m_gui_form->addVariable("# Frame", m_input->frameCount)->setEditable(false);

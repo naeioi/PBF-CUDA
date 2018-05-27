@@ -92,8 +92,6 @@ void computeLambda(
 
 #ifndef DEBUG_NO_HASH_GRID
 
-	uint starts[27], ends[27], nrange = 0;
-
 #pragma unroll 3
 	for (int dx = -1; dx <= 1; dx++) {
 #pragma unroll 3
@@ -104,13 +102,6 @@ void computeLambda(
 				if (x < 0 || x >= cellDim.x || y < 0 || y >= cellDim.y || z < 0 || z >= cellDim.z) continue;
 				int cellId = cellxyzToId(x, y, z);
 				uint start = cellStarts[cellId], end = cellEnds[cellId];
-
-				if (start +1 < end && iid == MI) {
-					// starts[nrange] = start;
-					// ends[nrange] = end;
-					nrange++;
-				}
-
 				for (int j = start; j < end; j++) {
 					float3 d = cpos - pos[j];
 					float r2 = d.x * d.x + d.y * d.y + d.z * d.z;
@@ -127,21 +118,6 @@ void computeLambda(
 				}
 			}
 		}
-	}
-
-	if (0 && iid == MI) {
-		if (nrange == 0)
-			printf("#%3d sibs: NULL\n", MI);
-		else if (nrange == 1)
-			printf("#%3d sibs: [%u,%u]\n", MI, starts[0], ends[0]);
-		else if (nrange == 2)
-			printf("#%3d sibs: [%u,%u],[%u,%u]\n", MI, starts[0], ends[0], starts[1], ends[1]);
-		else if (nrange == 3)
-			printf("#%3d sibs: [%u,%u],[%u,%u],[%u,%u]\n", MI, starts[0], ends[0], starts[1], ends[1], starts[2], ends[2]);
-		else if (nrange == 4)
-			printf("#%3d sibs: [%u,%u],[%u,%u],[%u,%u],[%u,%u]\n", MI, starts[0], ends[0], starts[1], ends[1], starts[2], ends[2], starts[3], ends[3]);
-		else if (nrange >= 5)
-			printf("#%3d sibs: [%u,%u],[%u,%u],[%u,%u],[%u,%u],[%u,%u]\n", MI, starts[0], ends[0], starts[1], ends[1], starts[2], ends[2], starts[3], ends[3], starts[4], ends[4]);
 	}
 
 #else
@@ -205,19 +181,6 @@ void computetpos(
 					float corr = coef_corr * powf(h_poly6(h, norm2(p)), n_corr);
 					dd = (lambda + lambdas[j] + corr) * h_spikyGrad(h, p);
 					d += dd;
-					/* BUG */
-					/*if (isfinite(dd.x))
-						d += dd;*/
-
-					/*if (iid == MI) {
-						printf("Particle #%d(%f,%f,%f) is #0's neighbor, d=(%.3f,%.3f,%.3f), corr=%.3f, spikyGrad=%.3f\n", j, expand(pos[j]), expand(d), corr, h_spikyGrad(h, p));
-					}*/
-					/*if (iid == MI) {
-						printf("Particle #%d(%f,%f,%f) is #0's neighbor, d=(%.3f,%.3f,%.3f)\n", j, expand(pos[j]), expand(d));
-					}*/
-					/*if (iid == MI) {
-						printf("corr=%.3f, spikyGrad=%.3f\n", corr, h_spikyGrad(h, p));
-					}*/
 				}
 			}
 		}
@@ -234,8 +197,6 @@ void computetpos(
 		}
 	}
 #endif
-
-	// dpos[i] = d / pho0;
 	
 	d = clamp3f(d / pho0, -MAX_DP, MAX_DP);
 	if (0 && iid == MI)
@@ -269,8 +230,10 @@ void computeXSPH(
 
 	for (int dx = -1; dx <= 1; dx++) {
 		int x = xyz.x + dx;
+		// if (x < 0 || x >= cellDim.x) continue;
 		for (int dy = -1; dy <= 1; dy++) {
 			int y = xyz.y + dy;
+			// if (y < 0 || y >= cellDim.y) continue;
 			for (int dz = -1; dz <= 1; dz++) {
 				int z = xyz.z + dz;
 				if (x < 0 || x >= cellDim.x || y < 0 || y >= cellDim.y || z < 0 || z >= cellDim.z) continue;
@@ -280,6 +243,7 @@ void computeXSPH(
 					float3 dp = cpos - pos[j];
 					float3 vp = vel[j] - cvel;
 					avel += 2.f * vp * h_poly6(h, norm2(dp)) / (cpho + phos[j]);
+					// avel += 2.f * vp * 0.f / (cpho + phos[j]);
 				}
 			}
 		}
