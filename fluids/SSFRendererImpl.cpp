@@ -41,6 +41,7 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height, uint sky
 	glGenTextures(1, &d_depth_b);
 	glGenTextures(1, &d_normal_D);
 	glGenTextures(1, &d_H);
+	glGenTextures(1, &d_thick);
 
 	glBindTexture(GL_TEXTURE_2D, d_normal_D);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
@@ -68,6 +69,11 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height, uint sky
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	checkGLErr();
+	glBindTexture(GL_TEXTURE_2D, d_thick);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	checkGLErr();
 
 	/* TODO: Bind texture to CUDA resource */
 	//checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_normal_D, d_normal_D, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
@@ -87,6 +93,7 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height, uint sky
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, d_depth_b, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, d_normal_D, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, d_H, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, d_thick, 0);
 
 	checkFramebufferComplete();
 	checkGLErr();
@@ -153,20 +160,28 @@ void SSFRendererImpl::renderDepth() {
 
 	/* Render to framebuffer */
 	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
+	// glEnable(GL_BLEND);
 	glDisable(GL_BLEND);
 
 	/* Reset depth_r to maximum */
-	GLfloat red[] = { 100.f };
-	glClearTexImage(d_depth_a, 0, GL_RED, GL_FLOAT, red);
+	GLfloat inf[] = { 100.f }, zero[] = { 0.f };
+	glClearTexImage(d_depth_a, 0, GL_RED, GL_FLOAT, inf);
 	checkGLErr();
-	glClearTexImage(d_depth_b, 0, GL_RED, GL_FLOAT, red);
+	glClearTexImage(d_depth_b, 0, GL_RED, GL_FLOAT, inf);
+	checkGLErr();
+	glClearTexImage(d_thick, 0, GL_RED, GL_FLOAT, zero);
 	checkGLErr();
 
 	/* Have to assign COLOR_ATTACHMENT0 to first drawbuffer
 	 * because later we assign COLOR_ATTACHMENT2 to first drawbuffer
 	 */
-	GLenum bufs[] = { GL_COLOR_ATTACHMENT0 /* d_depth_a */ };
-	glDrawBuffers(1, bufs);
+	GLenum bufs[] = { GL_COLOR_ATTACHMENT0 /* d_depth_a */, GL_COLOR_ATTACHMENT4 };
+	glDrawBuffers(2, bufs);
+
+	/* Disable blend for depth & Set additive blend for thickness */
+	// glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+	// glBlendFuncSeparatei(0, GL_ONE, GL_ONE, GL_ZERO, GL_ZERO);
+	// glBlendFuncSeparatei(1, GL_ONE, GL_ONE, GL_ONE, GL_ZERO);
 
 	m_s_get_depth->use();
 	m_camera->use(Shader::now());
@@ -189,6 +204,7 @@ void SSFRendererImpl::renderDepth() {
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glDrawArrays(GL_POINTS, 0, m_nparticle);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 	glEnable(GL_BLEND);
 }
 

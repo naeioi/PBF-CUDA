@@ -43,6 +43,8 @@ struct SSFRendererImpl
 	uint d_normal_D;
 	/* curvature */
 	uint d_H;
+	/* Thickness */
+	uint d_thick;
 	/* Cuda resources to map/unmap texture */
 	//struct cudaGraphicsResource *dcr_depth, *dcr_normal_D, *dcr_H;
 	inline uint zTex1() { return m_ab ? d_depth_a : d_depth_b;  } /* Smooth source */

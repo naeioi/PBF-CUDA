@@ -7,6 +7,8 @@ uniform float r;
 
 in vec4 viewPos;
 in vec4 projPos;
+
+/* TODO: add depth & thickness drawbuffer */
 out vec4 FragColor;
 
 float linearize(float d) {

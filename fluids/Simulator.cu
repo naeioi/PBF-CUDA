@@ -73,23 +73,26 @@ struct getGridId {
 };
 
 struct getPoly6 {
-	float coef, h2, h9;
+	float coef, h2;
 	getPoly6(float h) { 
-		h2 = h * h;  
-		float h3 = h2 * h;
-		h9 = h3 * h3;
-		coef = 315.f / (64.f * M_PI *  h9);
+		h2 = h * h;
+		float ih = 1.f / h;
+		float ih3 = ih * ih * ih;  
+		float ih9 = ih3 * ih3 * ih3;
+		coef = 315.f * ih9 / (64.f * M_PI);
 	}
 	__device__
 	float operator()(float r2) {
-		return coef * (h2 - r2) * (h2 - r2) * (h2 - r2);
+		if (r2 >= h2) return 0;
+		float d = h2 - r2;
+		return coef * d * d * d;
 	}
 };
 
 struct getSpikyGrad {
-	float h, h6, coef;
+	float h, coef;
 	getSpikyGrad(float h) : h(h) {
-		h6 = h * h;
+		float h6 = h * h;
 		h6 = h6 * h6 * h6;
 		coef = -45.f / (M_PI * h6);
 	}
@@ -97,7 +100,9 @@ struct getSpikyGrad {
 	__device__
 	float3 operator()(float3 r) {
 		float rlen = length(r);
-		return coef * (h - rlen) * (h - rlen) * normalize(r);
+		if (rlen >= h || rlen < KERNAL_EPS) return make_float3(0, 0, 0);
+		float d = h - rlen;
+		return coef * d * d / rlen * r;
 	}
 };
 
@@ -221,7 +226,8 @@ void Simulator::correctDensity()
 		m_gridHashDim,
 		dc_npos, m_nparticle, m_pho0, m_lambda_eps, m_k_boundaryDensity,
 		m_h,
-		getGridxyz(m_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim), DensityBoundary(m_ulim, m_llim, m_h));
+		getGridxyz(m_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim), DensityBoundary(m_ulim, m_llim, m_h),
+		getPoly6(m_h), getSpikyGrad(m_h));
 
 	// cudaDeviceSynchronize();
 	// getLastCudaError("Kernel execution failed: computeLambda");
@@ -235,7 +241,8 @@ void Simulator::correctDensity()
 		m_gridHashDim,
 		dc_npos, dc_tpos, m_nparticle, m_pho0, m_h, m_coef_corr, m_n_corr,
 		getGridxyz(m_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim),
-		m_ulim, m_llim);
+		m_ulim, m_llim,
+		getPoly6(m_h), getSpikyGrad(m_h));
 
 	thrust::device_ptr<float3> d_npos(dc_npos), d_tpos(dc_tpos);
 	thrust::copy_n(d_tpos, m_nparticle, d_npos);
@@ -253,8 +260,8 @@ void Simulator::correctVelocity() {
 		dc_gridStart, dc_gridEnd, m_gridHashDim,
 		dc_npos, dc_vel, dc_nvel, m_nparticle,
 		m_c_XSPH, m_h, 
-		getGridxyz(m_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim)
-		);
+		getGridxyz(m_llim, m_gridHashDim, m_h), xyzToId(m_gridHashDim),
+		getPoly6(m_h));
 }
 
 void Simulator::updateVelocity() {

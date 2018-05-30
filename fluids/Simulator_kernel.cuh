@@ -67,7 +67,7 @@ float3 h_spikyGrad(float h, float3 r) {
 	return (coef * (h - rlen) * (h - rlen)) * normalize(r);
 }
 
-template <typename Func1, typename Func2, typename Func3>
+template <typename Func1, typename Func2, typename Func3, typename Poly6F, typename SpikyF>
 __global__
 void computeLambda(
 	uint* iids,
@@ -76,7 +76,7 @@ void computeLambda(
 	int3 cellDim,
 	float3* pos, int n, float pho0, float lambda_eps, float k_boundaryDensity,
 	float h,
-	Func1 posToCellxyz, Func2 cellxyzToId, Func3 boundaryDensity) {
+	Func1 posToCellxyz, Func2 cellxyzToId, Func3 boundaryDensity, Poly6F poly6, SpikyF spiky) {
 	
 	int i = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
 	
@@ -105,8 +105,8 @@ void computeLambda(
 				for (int j = start; j < end; j++) {
 					float3 d = cpos - pos[j];
 					float r2 = d.x * d.x + d.y * d.y + d.z * d.z;
-					pho += h_poly6(h, r2);
-					grad = h_spikyGrad(h, d) / pho0;
+					pho += poly6(r2);
+					grad = spiky(d) / pho0;
 					gradi += grad;
 					if (0 && iid == MI) printf("#%-3d <~ #%-3d:(%f,%f,%f), pho=%.1f\n", iid, iids[j], expand(pos[j]), pho);
 					/* There is always a j equals to i in theory, but because hash grid is built once for multiple rounds of position correction, 
@@ -145,7 +145,7 @@ void computeLambda(
 			, iids[i], expand(gradi), gradj_l2, boundPho, lambdas[i], pho);
 }
 
-template <typename Func1, typename Func2>
+template <typename Func1, typename Func2, typename Poly6F, typename SpikyF>
 __global__
 void computetpos(
 	float* lambdas, 
@@ -154,7 +154,7 @@ void computetpos(
 	int3 cellDim,
 	float3* pos, float3 *tpos, int n, 
 	float pho0, float h, float coef_corr, float n_corr, 
-	Func1 posToCellxyz, Func2 cellxyzToId, float3 ulim, float3 llim) {
+	Func1 posToCellxyz, Func2 cellxyzToId, float3 ulim, float3 llim, Poly6F poly6, SpikyF spiky) {
 
 	int i = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
 
@@ -177,10 +177,9 @@ void computetpos(
 				int cellId = cellxyzToId(x, y, z);
 				uint start = cellStarts[cellId], end = cellEnds[cellId];
 				for (int j = start; j < end; j++) if (j != i) {
-					float3 p = cpos - pos[j], dd;
-					float corr = coef_corr * powf(h_poly6(h, norm2(p)), n_corr);
-					dd = (lambda + lambdas[j] + corr) * h_spikyGrad(h, p);
-					d += dd;
+					float3 p = cpos - pos[j];
+					float corr = coef_corr * powf(poly6(norm2(p)), n_corr);
+					d += (lambda + lambdas[j] + corr) * spiky(p);
 				}
 			}
 		}
@@ -210,7 +209,7 @@ void computetpos(
 	tpos[i] = cpos;
 }
 
-template <typename Func1, typename Func2>
+template <typename Func1, typename Func2, typename Poly6F>
 __global__
 void computeXSPH(
 	float* phos,
@@ -218,7 +217,7 @@ void computeXSPH(
 	uint* cellStarts, uint* cellEnds, int3 cellDim,
 	float3* pos, float3* vel, float3* nvel, int n,
 	float c_XSPH, float h,
-	Func1 grid_pos2xyz, Func2 grid_xyz2id) {
+	Func1 grid_pos2xyz, Func2 grid_xyz2id, Poly6F poly6) {
 
 	int i = __umul24(blockIdx.x, blockDim.x) + threadIdx.x;
 
@@ -242,7 +241,7 @@ void computeXSPH(
 				for (int j = start; j < end; j++) {
 					float3 dp = cpos - pos[j];
 					float3 vp = vel[j] - cvel;
-					avel += 2.f * vp * h_poly6(h, norm2(dp)) / (cpho + phos[j]);
+					avel += 2.f * vp * poly6(norm2(dp)) / (cpho + phos[j]);
 					// avel += 2.f * vp * 0.f / (cpho + phos[j]);
 				}
 			}
