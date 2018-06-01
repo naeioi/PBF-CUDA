@@ -179,9 +179,10 @@ void SSFRendererImpl::renderDepth() {
 	glDrawBuffers(2, bufs);
 
 	/* Disable blend for depth & Set additive blend for thickness */
-	// glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-	// glBlendFuncSeparatei(0, GL_ONE, GL_ONE, GL_ZERO, GL_ZERO);
-	// glBlendFuncSeparatei(1, GL_ONE, GL_ONE, GL_ONE, GL_ZERO);
+	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+	glBlendFuncSeparateiARB(0, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
+	glBlendFuncSeparateiARB(1, GL_ONE, GL_ONE, GL_ONE, GL_ZERO);
+
 
 	m_s_get_depth->use();
 	m_camera->use(Shader::now());
