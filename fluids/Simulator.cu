@@ -164,7 +164,7 @@ struct DensityBoundary {
 
 void Simulator::advect()
 {
-	int block_size = 256;
+	int block_size = 128;
 	int grid_size = ceilDiv(m_nparticle, block_size);
 
 	advect_kernel<<<grid_size, block_size>>>(
@@ -177,7 +177,7 @@ void Simulator::advect()
 
 void Simulator::buildGridHash()
 {
-	int block_size = 256;
+	int block_size = 128;
 	int grid_size = ceilDiv(m_nparticle, block_size);
 	int smem = sizeof(uint) * (block_size + 2);
 
@@ -212,7 +212,7 @@ void Simulator::buildGridHash()
 
 void Simulator::correctDensity() 
 {
-	int block_size = 256;
+	int block_size = 128;
 	int grid_size = ceilDiv(m_nparticle, block_size);
 
 	// printf("maxStart = %u, maxMin = %u\n", arr[0], arr[1]);
@@ -250,7 +250,7 @@ void Simulator::correctDensity()
 
 void Simulator::correctVelocity() {
 	
-	int block_size = 256;
+	int block_size = 128;
 	int grid_size = ceilDiv(m_nparticle, block_size);
 
 	/* XSPH viscosity */
