@@ -100,6 +100,7 @@ void computeLambda(
 			for (int dz = -1; dz <= 1; dz++) {
 				int x = ind.x + dx, y = ind.y + dy, z = ind.z + dz;
 				if (x < 0 || x >= cellDim.x || y < 0 || y >= cellDim.y || z < 0 || z >= cellDim.z) continue;
+
 				int cellId = cellxyzToId(x, y, z);
 				uint start = cellStarts[cellId], end = cellEnds[cellId];
 				for (int j = start; j < end; j++) {
@@ -174,6 +175,7 @@ void computetpos(
 			for (int dz = -1; dz <= 1; dz++) {
 				int x = ind.x + dx, y = ind.y + dy, z = ind.z + dz;
 				if (x < 0 || x >= cellDim.x || y < 0 || y >= cellDim.y || z < 0 || z >= cellDim.z) continue;
+
 				int cellId = cellxyzToId(x, y, z);
 				uint start = cellStarts[cellId], end = cellEnds[cellId];
 				for (int j = start; j < end; j++) if (j != i) {
