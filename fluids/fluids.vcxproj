@@ -204,6 +204,8 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <None Include="SSFcomputeH.v.glsl" />
     <None Include="SSFget_depth.f.glsl" />
     <None Include="SSFget_depth.v.glsl" />
+    <None Include="SSFget_thick.f.glsl" />
+    <None Include="SSFget_thick.v.glsl" />
     <None Include="SSFshading.f.glsl" />
     <None Include="SSFshading.v.glsl" />
     <None Include="SSFrestore_normal.f.glsl" />

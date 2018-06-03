@@ -16,6 +16,7 @@ uniform float r0;
 
 uniform sampler2D zTex;
 uniform sampler2D normalDTex;
+uniform sampler2D thickTex;
 uniform samplerCube skyTex;
 
 out vec4 FragColor;
@@ -76,8 +77,11 @@ void shading_fresnel() {
 	vec3 view_reflect = -e + 2 * n * dot(n, e);
 	vec3 view_refract = -e - 0.2*n;
 
+	float thickness = texture(thickTex, texCoord).x;
+	float attenuate = max(exp(0.5*-thickness), 0.6);
 	vec3 tint_color = vec3(6, 105, 217) / 256;
-	vec3 refract_color = mix(tint_color, trace_color(p, view_refract), 0.8);
+	// vec3 refract_color = mix(tint_color, trace_color(p, view_refract), 0.8);
+	vec3 refract_color = mix(tint_color, trace_color(p, view_refract), attenuate);
 	vec3 reflect_color = trace_color(p, view_reflect);
 
 	FragColor = vec4(mix(refract_color, reflect_color, r), 1);

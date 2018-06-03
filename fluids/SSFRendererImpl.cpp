@@ -102,6 +102,7 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height, uint sky
 
 	/* Load shaders */
 	m_s_get_depth = new Shader(Filename("SSFget_depth.v.glsl"), Filename("SSFget_depth.f.glsl"));
+	m_s_get_thick = new Shader(Filename("SSFget_thick.v.glsl"), Filename("SSFget_thick.f.glsl"));
 	m_s_shading = new Shader(Filename("SSFshading.v.glsl"), Filename("SSFshading.f.glsl"));
 	m_s_restore_normal = new Shader(Filename("SSFrestore_normal.v.glsl"), Filename("SSFrestore_normal.f.glsl"));
 	m_s_computeH = new Shader(Filename("SSFcomputeH.v.glsl"), Filename("SSFcomputeH.f.glsl"));
@@ -134,6 +135,7 @@ void SSFRendererImpl::render(uint p_vao, int nparticle) {
 	m_ab = 0;
 
 	renderDepth();
+	renderThick();
 
 	// Algo 1. Compute H and update depth
 	/*for (int i = 0; i < m_niter; i++) {
@@ -169,20 +171,12 @@ void SSFRendererImpl::renderDepth() {
 	checkGLErr();
 	glClearTexImage(d_depth_b, 0, GL_RED, GL_FLOAT, inf);
 	checkGLErr();
-	glClearTexImage(d_thick, 0, GL_RED, GL_FLOAT, zero);
-	checkGLErr();
 
 	/* Have to assign COLOR_ATTACHMENT0 to first drawbuffer
 	 * because later we assign COLOR_ATTACHMENT2 to first drawbuffer
 	 */
-	GLenum bufs[] = { GL_COLOR_ATTACHMENT0 /* d_depth_a */, GL_COLOR_ATTACHMENT4 };
-	glDrawBuffers(2, bufs);
-
-	/* Disable blend for depth & Set additive blend for thickness */
-	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-	glBlendFuncSeparateiARB(0, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
-	glBlendFuncSeparateiARB(1, GL_ONE, GL_ONE, GL_ONE, GL_ZERO);
-
+	GLenum bufs[] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, bufs);
 
 	m_s_get_depth->use();
 	m_camera->use(Shader::now());
@@ -209,6 +203,50 @@ void SSFRendererImpl::renderDepth() {
 	glEnable(GL_BLEND);
 }
 
+void SSFRendererImpl::renderThick() {
+	/* After renderDepth(), z_c is store at d_depth
+	* Linearize depth (z_e) is stored at d_depth_a
+	*/
+
+	/* Render to framebuffer */
+	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
+	glEnable(GL_BLEND);
+
+	/* Reset depth_r to maximum */
+	GLfloat zero[] = { 0.f };
+	glClearTexImage(d_thick, 0, GL_RED, GL_FLOAT, zero);
+	checkGLErr();
+
+	/* Have to assign COLOR_ATTACHMENT0 to first drawbuffer
+	* because later we assign COLOR_ATTACHMENT2 to first drawbuffer
+	*/
+	GLenum bufs[] = { GL_COLOR_ATTACHMENT4 /* d_thick */ };
+	glDrawBuffers(1, bufs);
+
+	/* Disable blend for depth & Set additive blend for thickness */
+	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+	glBlendFuncSeparateiARB(0, GL_ONE, GL_ONE, GL_ONE, GL_ONE);
+
+	m_s_get_thick->use();
+	m_camera->use(Shader::now());
+
+	/* TODO: encapsulate uniforms into */
+	ProjectionInfo i = m_camera->getProjectionInfo();
+	m_s_get_thick->setUnif("s_h", m_height);
+	m_s_get_thick->setUnif("p_t", i.t);
+	m_s_get_thick->setUnif("p_n", i.n);
+	m_s_get_thick->setUnif("p_f", i.f);
+	m_s_get_thick->setUnif("r", 0.1f * 0.5f);
+	m_s_get_thick->setUnif("pointRadius", 50.f);
+
+	glDisable(GL_DEPTH_TEST);
+	glBindVertexArray(p_vao);
+
+	glDrawArrays(GL_POINTS, 0, m_nparticle);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+}
+
 void SSFRendererImpl::shading() {
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -232,11 +270,16 @@ void SSFRendererImpl::shading() {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, d_normal_D);
 	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, d_thick);
+	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, d_sky);
+
+	glBlendFuncSeparateiARB(0, GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
 
 	m_s_shading->setUnif("zTex", 0);
 	m_s_shading->setUnif("normalDTex", 1);
-	m_s_shading->setUnif("skyTex", 2);
+	m_s_shading->setUnif("thickTex", 2);
+	m_s_shading->setUnif("skyTex", 3);
 
 	// glClear(GL_COLOR_BUFFER_BIT);
 	glDrawArrays(GL_TRIANGLES, 0, 6);

@@ -212,6 +212,12 @@
     <None Include="ground.f.glsl">
       <Filter>shaders</Filter>
     </None>
+    <None Include="SSFget_thick.v.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="SSFget_thick.f.glsl">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="fragment.glsl">

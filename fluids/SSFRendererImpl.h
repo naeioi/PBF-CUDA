@@ -13,6 +13,7 @@ struct SSFRendererImpl
 
 	void render(uint p_vao, int nparticle);
 	void renderDepth();
+	void renderThick();
 	void restoreNormal();
 	void computeH();
 	void updateDepth();
@@ -57,7 +58,7 @@ struct SSFRendererImpl
 	void mapResources();
 	void unmapResources();
 
-	Shader *m_s_get_depth, *m_s_shading;
+	Shader *m_s_get_depth, *m_s_get_thick, *m_s_shading;
 	Shader *m_s_restore_normal, *m_s_computeH, *m_s_update_depth;
 
 	/* Bilateral filter */
