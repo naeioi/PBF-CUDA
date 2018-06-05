@@ -27,6 +27,7 @@ FluidSystem::FluidSystem()
 	params.sigma_r = 6.f;
 	params.sigma_z = 0.1f;
 	params.shading_option = 0;
+	params.keep_edge = 1;
 
 	const float3 ulim = make_float3(2.f, 2.f, 2.f), llim = make_float3(-2.f, -2.f, 0.f);
 	const glm::vec3 cam_pos(1.f, -5.f, 2.f), cam_focus(0, 0, 1.5f);

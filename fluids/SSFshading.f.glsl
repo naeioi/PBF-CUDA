@@ -127,6 +127,8 @@ void main() {
 	// shading_fresnel();
 	if (shading_option == 1)
 		shading_depth();
-	else
+	else if (shading_option == 2)
 		shading_thick();
+	else if (shading_option == 3)
+		shading_normal();
 }

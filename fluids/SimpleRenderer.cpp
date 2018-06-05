@@ -111,6 +111,7 @@ void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) 
 	sigma_z->setSpinnable(true);
 
 	m_gui_form->addVariable("shading_option", params.shading_option)->setSpinnable(true);
+	m_gui_form->addVariable("keep_edge", params.keep_edge)->setSpinnable(true);
 
 	m_gui_form->addButton("Next Frame", [this]() { m_nextFrameBtnCb();  });
 	auto runBtn = m_gui_form->addButton("Run", []() {});

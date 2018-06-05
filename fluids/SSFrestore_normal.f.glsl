@@ -13,6 +13,8 @@ uniform float p_r;
 uniform float s_w;
 uniform float s_h;
 
+uniform int keep_edge;
+
 /* Assume left-hand coord: z > 0 for front of eye */
 uniform sampler2D zTex;
 
@@ -43,8 +45,10 @@ void main() {
 	float dzdx2 = z - getZ(x - dx, y), dzdy2 = z - getZ(x, y - dy);
 	
 	/* Skip silhouette */
-	if (abs(dzdx2) < abs(dzdx)) dzdx = dzdx2;
-	if (abs(dzdy2) < abs(dzdy)) dzdy = dzdy2;
+	if (keep_edge == 1) {
+		if (abs(dzdx2) < abs(dzdx)) dzdx = dzdx2;
+		if (abs(dzdy2) < abs(dzdy)) dzdy = dzdy2;
+	}
 
 	vec3 n = vec3(-c_y * dzdx, -c_x * dzdy, c_x*c_y*z);
 	/* revert n.z to positive for debugging */

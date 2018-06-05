@@ -332,6 +332,8 @@ void SSFRendererImpl::restoreNormal() {
 	m_s_restore_normal->setUnif("s_w", (float)m_width);
 	m_s_restore_normal->setUnif("s_h", (float)m_height);
 
+	m_s_restore_normal->setUnif("keep_edge", GUIParams::getInstance().keep_edge);
+
 	glDisable(GL_DEPTH_TEST);
 
 	GLfloat black[] = { 0.f, 0.f, 0.f, 0.f };
