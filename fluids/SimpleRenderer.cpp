@@ -82,17 +82,17 @@ void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) 
 	GUIParams &params = GUIParams::getInstance();
 	m_gui_form->addVariable("# Frame", m_input->frameCount)->setEditable(false);
 	m_gui_form->addVariable("# Iter", params.niter)->setSpinnable(true);
-	m_gui_form->addVariable("pho0", params.pho0)->setSpinnable(true);
-	m_gui_form->addVariable("g", params.g)->setSpinnable(true);
-	m_gui_form->addVariable("h", params.h)->setSpinnable(true);
-	m_gui_form->addVariable("dt", params.dt)->setSpinnable(true);
-	m_gui_form->addVariable("lambda_eps", params.lambda_eps)->setSpinnable(true);
-	m_gui_form->addVariable("delta_q", params.delta_q)->setSpinnable(true);
-	m_gui_form->addVariable("k_corr", params.k_corr)->setSpinnable(true);
-	m_gui_form->addVariable("n_corr", params.n_corr)->setSpinnable(true);
-	m_gui_form->addVariable("k_boundary", params.k_boundaryDensity)->setSpinnable(true);
-	m_gui_form->addVariable("c_XSPH", params.c_XSPH)->setSpinnable(true);
-	m_gui_form->addVariable("Highlight #", m_input->hlIndex)->setSpinnable(true);
+	// m_gui_form->addVariable("pho0", params.pho0)->setSpinnable(true);
+	// m_gui_form->addVariable("g", params.g)->setSpinnable(true);
+	// m_gui_form->addVariable("h", params.h)->setSpinnable(true);
+	// m_gui_form->addVariable("dt", params.dt)->setSpinnable(true);
+	// m_gui_form->addVariable("lambda_eps", params.lambda_eps)->setSpinnable(true);
+	// m_gui_form->addVariable("delta_q", params.delta_q)->setSpinnable(true);
+	// m_gui_form->addVariable("k_corr", params.k_corr)->setSpinnable(true);
+	// m_gui_form->addVariable("n_corr", params.n_corr)->setSpinnable(true);
+	// m_gui_form->addVariable("k_boundary", params.k_boundaryDensity)->setSpinnable(true);
+	// m_gui_form->addVariable("c_XSPH", params.c_XSPH)->setSpinnable(true);
+	// m_gui_form->addVariable("Highlight #", m_input->hlIndex)->setSpinnable(true);
 	
 	auto smooth_niter = m_gui_form->addVariable("Smooth # Iter", params.smooth_niter); 
 	smooth_niter->setMinMaxValues(0, 60);
@@ -109,6 +109,8 @@ void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) 
 	auto sigma_z = m_gui_form->addVariable("sigma_z", params.sigma_z);
 	sigma_z->setMinMaxValues(0.f, 1.f);
 	sigma_z->setSpinnable(true);
+
+	m_gui_form->addVariable("shading_option", params.shading_option)->setSpinnable(true);
 
 	m_gui_form->addButton("Next Frame", [this]() { m_nextFrameBtnCb();  });
 	auto runBtn = m_gui_form->addButton("Run", []() {});

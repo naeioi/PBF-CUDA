@@ -21,6 +21,7 @@ public:
 	float sigma_r;
 	float sigma_z;
 	int smooth_niter;
+	int shading_option;
 	
 	static GUIParams& getInstance();
 

@@ -263,6 +263,8 @@ void SSFRendererImpl::shading() {
 	m_s_shading->setUnif("p_r", i.r);
 	m_s_shading->setUnif("r0", m_r0);
 
+	m_s_shading->setUnif("shading_option", GUIParams::getInstance().shading_option);
+
 	glEnable(GL_DEPTH_TEST);
 	glBindVertexArray(m_quad_vao);
 	glActiveTexture(GL_TEXTURE0);

@@ -8,6 +8,8 @@ uniform float p_n;
 uniform float p_f;
 uniform float p_t;
 uniform float p_r;
+
+uniform int shading_option;
 /* Schlick's approximation on Fresnel factor (reflection coef)
  * r0: Reflection coef when incoming light parallel to the normal 
  * r0 = [(n1 - n2)/(n1 + n2)]^2
@@ -87,6 +89,33 @@ void shading_fresnel() {
 	FragColor = vec4(mix(refract_color, reflect_color, r), 1);
 }
 
+void shading_depth() {
+	vec3 n = texture(normalDTex, texCoord).xyz;
+	vec3 p = getPos();
+	vec3 e = normalize(-p);
+	float z = texture(zTex, texCoord).x;
+	if (z > 50) discard;
+
+	float c = exp(z)/(exp(z)+1);
+	c = (c - 0.5) * 2;
+
+	FragColor = vec4(c,c,c,1);
+}
+
+void shading_thick() {
+	vec3 n = texture(normalDTex, texCoord).xyz;
+	vec3 p = getPos();
+	vec3 e = normalize(-p);
+	float z = texture(zTex, texCoord).x;
+	if (z > 50) discard;
+	float t = texture(thickTex, texCoord).x;
+
+	t = exp(t) / (exp(t) + 1);
+	t = (t - 0.5) * 2;
+
+	FragColor = vec4(t, t, t, 1);
+}
+
 void main() {
 
 	// ze to z_ndc to gl_FragDepth
@@ -95,5 +124,9 @@ void main() {
 	float z_ndc = proj(-ze);
 	gl_FragDepth = 0.5 * (gl_DepthRange.diff * z_ndc + gl_DepthRange.far + gl_DepthRange.near);	
 
-	shading_fresnel();
+	// shading_fresnel();
+	if (shading_option == 1)
+		shading_depth();
+	else
+		shading_thick();
 }
