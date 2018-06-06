@@ -33,8 +33,11 @@ public:
 
 	/* TODO: may swap(d_pos, d_npos), i.e., the destination is assigned by Simulator, rather than caller */
 	void step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_iid, int nparticle);
+
 	void loadParams();
 	void saveParams();
+
+	void setLim(const float3 &ulim, const float3 &llim);
 private:
 	void advect();
 	void buildGridHash();

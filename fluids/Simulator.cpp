@@ -1,4 +1,5 @@
 #include "Simulator.h"
+#include "Logger.h"
 #include <cuda_runtime.h>
 #include <helper_cuda.h>
 
@@ -8,6 +9,8 @@
 
 void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_iid, int nparticle) 
 {
+	auto& logger = Logger::getInstance();
+
 	m_nparticle = nparticle;
 
 	struct cudaGraphicsResource *dcr_pos, *dcr_npos;
@@ -37,27 +40,44 @@ void Simulator::step(uint d_pos, uint d_npos, uint d_vel, uint d_nvel, uint d_ii
 	/* Real upper and lowe limit after advection */
 	static int round = 0;
 	// fprintf(stderr, "-- Round %d --\n", round++);
+
+	cudaDeviceSynchronize();
+	logger.logTime(Logger::ADVECT_START);
 	advect();
+	cudaDeviceSynchronize();
+	logger.logTime(Logger::ADVECT_END);
 	
 	// cudaDeviceSynchronize();
 	// printf("advect() done.\n");
 
+	logger.logTime(Logger::GRID_START);
 	buildGridHash();
+	cudaDeviceSynchronize();
+	logger.logTime(Logger::GRID_END);
 
 	// cudaDeviceSynchronize();
 	// printf("buildGridHash() done.\n");
 
+	logger.logTime(Logger::DENSITY_START);
 	for (uint i = 0; i < m_niter; i++) {
 		// printf("== Iter %d ==\n", i);
 		correctDensity();
 		// cudaDeviceSynchronize();
 	}
+	cudaDeviceSynchronize();
+	logger.logTime(Logger::DENSITY_END);
 
 	/* update Velocity */
+	logger.logTime(Logger::VELOCITY_UPDATE_START);
 	updateVelocity();
-	correctVelocity();
-
 	cudaDeviceSynchronize();
+	logger.logTime(Logger::VELOCITY_UPDATE_END);
+
+	logger.logTime(Logger::VELOCITY_CORRECT_START);
+	correctVelocity();
+	cudaDeviceSynchronize();
+	logger.logTime(Logger::VELOCITY_CORRECT_END);
+
 	//exit(0);
 
 	/* Simulate logic ends */
@@ -107,4 +127,10 @@ void Simulator::saveParams() {
 	params.k_boundaryDensity = m_k_boundaryDensity;
 	params.c_XSPH = m_c_XSPH;
 	params.niter = m_niter;
+}
+
+void Simulator::setLim(const float3 & ulim, const float3 & llim)
+{
+	m_llim = llim;
+	m_ulim = ulim;
 }

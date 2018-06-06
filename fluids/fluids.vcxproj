@@ -116,11 +116,13 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="..\common\nanovg\src\stb_image.h" />
     <ClInclude Include="..\common\nanovg\src\stb_truetype.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="DoubleDamSource.h" />
     <ClInclude Include="FixedCubeSource.h" />
     <ClInclude Include="GUIParams.h" />
     <ClInclude Include="FluidSystem.h" />
     <ClInclude Include="helper.h" />
     <ClInclude Include="Input.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="ParticleSource.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />
@@ -166,11 +168,13 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="..\common\nanovg\src\nanovg.c" />
     <ClCompile Include="..\common\src\glad.c" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="DoubleDamSource.cpp" />
     <ClCompile Include="FixedCubeSource.cpp" />
     <ClCompile Include="FluidSystem.cpp" />
     <ClCompile Include="GUIParams.cpp" />
     <ClCompile Include="helper.cpp" />
     <ClCompile Include="Input.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ParticleSource.cpp" />
     <ClCompile Include="Renderer.cpp" />

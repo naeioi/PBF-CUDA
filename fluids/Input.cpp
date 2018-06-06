@@ -9,6 +9,15 @@ Input::Input() {
 	reset();
 }
 
+Input* Input::m_instance = nullptr;
+
+Input& Input::getInstance() {
+	if (!m_instance) {
+		m_instance = new Input();
+	}
+	return *m_instance;
+}
+
 glm::vec2 Input::updateMousePos(glm::vec2 new_mouse)
 {
 	if (!last_mouse_valid) {
@@ -34,4 +43,6 @@ void Input::reset() {
 	right_mouse = left_mouse = UP;
 	hlIndex = 0;
 	frameCount = 0;
+	startMovingFrame = 0;
+	moving = false;
 }

@@ -1,5 +1,6 @@
 #include "SimpleRenderer.h"
 #include "Input.h"
+#include "Logger.h"
 
 #include <cstdlib>
 
@@ -39,7 +40,7 @@ void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) 
 	glfwWindowHint(GLFW_DEPTH_BITS, 24);
 	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
-	m_input = new Input();
+	m_input = &Input::getInstance();
 
 	m_window = glfwCreateWindow(m_width, m_height, "Fluid", nullptr, nullptr);
 	if (m_window == nullptr) {
@@ -112,14 +113,36 @@ void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) 
 
 	m_gui_form->addVariable("shading_option", params.shading_option)->setSpinnable(true);
 	m_gui_form->addVariable("keep_edge", params.keep_edge)->setSpinnable(true);
+	m_gui_form->addVariable("blur_option", params.blur_option)->setSpinnable(true);
 
 	m_gui_form->addButton("Next Frame", [this]() { m_nextFrameBtnCb();  });
 	auto runBtn = m_gui_form->addButton("Run", []() {});
 	runBtn->setFlags(nanogui::Button::ToggleButton);
 	runBtn->setChangeCallback([this](bool state) { m_input->running = state; });
+	
 	auto lastFrameBtn = m_gui_form->addButton("Last Frame", []() {});
 	lastFrameBtn->setFlags(nanogui::Button::ToggleButton);
 	lastFrameBtn->setChangeCallback([this](bool state) { m_input->lastFrame = state; });
+
+	auto movingBtn = m_gui_form->addButton("Sweep Boundary", []() {});
+	movingBtn->setFlags(nanogui::Button::ToggleButton);
+	movingBtn->setChangeCallback([this](bool state) {
+		printf("moving Btn=%d\n", state);
+		auto &input = Input::getInstance();
+		if (state) {
+			input.moving = true;
+			input.startMovingFrame = input.frameCount;
+		}
+		else {
+			input.moving = false;
+		}
+	});
+
+	auto logTime = m_gui_form->addButton("Log Time", []() {});
+	logTime->setFlags(nanogui::Button::ToggleButton);
+	logTime->setChangeCallback([this](bool state) { Logger::getInstance().toggleLogTime(state); });
+
+	m_gui_form->addButton("Report Time", []() { Logger::getInstance().report();  });
 
 	m_gui_screen->setVisible(true);
 	m_gui_screen->performLayout();
@@ -439,4 +462,10 @@ static uint loadCubemap(char **faces) {
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
 	return textureID;
+}
+
+void SimpleRenderer::setLim(const float3 & ulim, const float3 & llim)
+{
+	m_llim = llim;
+	m_ulim = ulim;
 }

@@ -9,6 +9,8 @@ uniform int kernel_r;
 uniform float blur_r;
 uniform float blur_z;
 
+uniform int blur_option;
+
 /* zA: source depth map, zB: target depth map */
 uniform sampler2D zA;
 uniform layout(r32f) image2D zB;
@@ -65,6 +67,10 @@ void main() {
 	float z = getZ(x, y);
 	if (z > 99) return;
 
-	float zz = bilateral(x, y);
+	float zz;
+	if (blur_option == 0)
+		zz = bilateral(x, y);
+	else
+		zz = gaussian(x, y);
 	setZ(x, y, zz);
 }

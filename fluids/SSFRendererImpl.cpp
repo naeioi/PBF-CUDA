@@ -430,6 +430,8 @@ void SSFRendererImpl::smoothDepth()
 	m_s_smooth_depth->setUnif("s_w", (int)m_width);
 	m_s_smooth_depth->setUnif("s_h", (int)m_height);
 
+	m_s_smooth_depth->setUnif("blur_option", GUIParams::getInstance().blur_option);
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, zTex1());
 	glActiveTexture(GL_TEXTURE1);

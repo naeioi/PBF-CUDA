@@ -1,5 +1,6 @@
 #include "FluidSystem.h"
 #include "FixedCubeSource.h"
+#include "DoubleDamSource.h"
 #include "GUIParams.h"
 #include <glm/common.hpp>
 using namespace glm;
@@ -28,16 +29,35 @@ FluidSystem::FluidSystem()
 	params.sigma_z = 0.1f;
 	params.shading_option = 0;
 	params.keep_edge = 1;
+	params.blur_option = 0;
 
-	const float3 ulim = make_float3(2.f, 2.f, 2.f), llim = make_float3(-2.f, -2.f, 0.f);
+	m_ulim = make_float3(2.f, 2.f, 4.f);
+	m_llim = make_float3(-2.f, -2.f, 0.f);
+	m_A_llim = make_float3(0.f, 0.f, 0.f);
+	m_A_ulim = make_float3(0.5f, 0.f, 0.f);
+	m_w = 0.1;
+	// const float3 ulim = make_float3(1.f, 1.f, 4.f), llim = make_float3(-2.f, -2.f, 0.f);
 	const glm::vec3 cam_pos(1.f, -5.f, 2.f), cam_focus(0, 0, 1.5f);
 
-	m_simulator = new Simulator(params, ulim, llim);
-	m_renderer = new SimpleRenderer(cam_pos, cam_focus, ulim, llim, [this]() { m_nextFrame = true; });
+	m_simulator = new Simulator(params, m_ulim, m_llim);
+	m_renderer = new SimpleRenderer(cam_pos, cam_focus, m_ulim, m_llim, [this]() { m_nextFrame = true; });
+
+	/* Single cube */
+	float dd = 1.f / 20;
+	float d1 = dd * 30, d2 = dd * 30, d3 = dd * 30;
 	m_source = new FixedCubeSource(
-		/* limits */  make_float3(.5f, .5f, 1.8f), make_float3(-.5f, -.5f, .8f),
-		/* numbers */ make_int3(40, 40, 20));
-	m_nparticle = 40 * 40 * 20;
+		/* limits */  make_float3(1.8f, 1.8f, 3.8f), make_float3(1.8f-d1, 1.8f-d2, 3.8f-d3),
+		/* numbers */ make_int3(30, 30, 30));
+	m_nparticle = 30 * 30 * 30;
+
+	/* Double cube */
+	/*float dd = 1.f / 20;
+	float d1 = dd * 20, d2 = dd * 20, d3 = dd * 40;
+	m_source = new DoubleDamSource(
+		make_float3(-1.8f, .8f, 3.8f), make_float3(-1.8f+d1, .8f-d2, 3.8f-d3), make_int3(20, 20, 40),
+		make_float3(.8f-d1, -1.8f+d2, 3.8f), make_float3(.8f, -1.8f, 3.8f-d3), make_int3(20, 20, 40));
+		
+	m_nparticle = 2 * 20 * 20 * 40;*/
 
 	/* Initialize vertex buffer */
 	glGenBuffers(1, &d_pos);
@@ -80,6 +100,14 @@ void FluidSystem::stepSimulate() {
 
 	m_simulator->loadParams();
 
+	/* Sweep boundary */
+	auto &input = Input::getInstance();
+	if (input.moving) {
+		float t = m_w * (input.frameCount - input.startMovingFrame);
+		float phi = sin(t);
+		m_simulator->setLim(m_ulim + m_A_ulim * phi, m_llim + m_A_llim * phi);
+	}
+
 	if (!m_tictoc)
 		m_simulator->step(d_pos, d_npos, d_vel, d_nvel, d_iid, m_nparticle);
 	else 
@@ -91,6 +119,14 @@ void FluidSystem::stepSimulate() {
 }
 
 void FluidSystem::render() {
+	/* Sweep boundary */
+	auto &input = Input::getInstance();
+	if (input.moving) {
+		float t = m_w * (input.frameCount - input.startMovingFrame);
+		float phi = sin(t);
+		m_renderer->setLim(m_ulim + m_A_ulim * phi, m_llim + m_A_llim * phi);
+	}
+
 	bool t = m_tictoc ^ m_renderer->m_input->lastFrame;
 	if (!t)
 		m_renderer->render(d_pos, d_iid, m_nparticle);

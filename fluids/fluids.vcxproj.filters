@@ -116,6 +116,8 @@
     <ClCompile Include="SSFRendererImpl.cpp" />
     <ClCompile Include="GUIParams.cpp" />
     <ClCompile Include="StaticVertices.cpp" />
+    <ClCompile Include="DoubleDamSource.cpp" />
+    <ClCompile Include="Logger.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FluidSystem.h" />
@@ -151,6 +153,8 @@
     <ClInclude Include="SSFRenderer.h" />
     <ClInclude Include="SSFRendererImpl.h" />
     <ClInclude Include="GUIParams.h" />
+    <ClInclude Include="DoubleDamSource.h" />
+    <ClInclude Include="Logger.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shaders">

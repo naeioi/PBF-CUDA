@@ -44,5 +44,10 @@ private:
 	/* tic: d_pos, toc: d_npos for rendering */
 	bool m_tictoc, m_nextFrame;
 	int  m_nparticle;
+
+	/* Moving boundary */
+	float3 m_ulim, m_llim;
+	float3 m_A_ulim, m_A_llim;
+	float m_w;
 };
 

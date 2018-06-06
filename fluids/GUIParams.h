@@ -23,6 +23,7 @@ public:
 	int smooth_niter;
 	int shading_option;
 	int keep_edge;
+	int blur_option;
 	
 	static GUIParams& getInstance();
 

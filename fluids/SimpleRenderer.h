@@ -23,6 +23,7 @@ public:
 	~SimpleRenderer();
 
 	void render(uint pos, uint iid, int m_nparticle);
+	void setLim(const float3 &ulim, const float3 &llim);
 
 	Input *m_input;
 

@@ -11,6 +11,8 @@ struct Input {
 	enum Pressed { UP, DOWN };
 
 	Input();
+	static Input& getInstance();
+	static Input* m_instance;
 
 	Pressed left_mouse, right_mouse, mid_mouse;
 	glm::vec2 last_mouse, mouse;
@@ -23,4 +25,7 @@ struct Input {
 
 	unsigned int hlIndex;
 	int frameCount;
+
+	int startMovingFrame;
+	bool moving;
 };

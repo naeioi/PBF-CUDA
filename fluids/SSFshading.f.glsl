@@ -68,19 +68,20 @@ vec3 trace_color(vec3 p, vec3 d) {
 	}
 	else
 		return texture(skyTex, world_d).rgb;
+		// return vec3(0.8, 0.8, 0.8);
 }
 
 void shading_fresnel() {
 	vec3 n = texture(normalDTex, texCoord).xyz;
 	vec3 p = getPos();
 	vec3 e = normalize(-p);
-	float r = r0 + (1 - r0)*pow(1 - dot(n, e), 2);
+	float r = r0 + (1 - r0)*pow(1 - dot(n, e), 3);
 
 	vec3 view_reflect = -e + 2 * n * dot(n, e);
 	vec3 view_refract = -e - 0.2*n;
 
 	float thickness = texture(thickTex, texCoord).x;
-	float attenuate = max(exp(0.5*-thickness), 0.6);
+	float attenuate = max(exp(0.5*-thickness), 0.2);
 	vec3 tint_color = vec3(6, 105, 217) / 256;
 	// vec3 refract_color = mix(tint_color, trace_color(p, view_refract), 0.8);
 	vec3 refract_color = mix(tint_color, trace_color(p, view_refract), attenuate);
@@ -131,4 +132,7 @@ void main() {
 		shading_thick();
 	else if (shading_option == 3)
 		shading_normal();
+	else if (shading_option == 4)
+		shading_fresnel_scale();
+	else shading_fresnel();
 }
