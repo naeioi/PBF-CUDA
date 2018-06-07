@@ -7,7 +7,7 @@
 #define KERNAL_EPS 1e-4
 // Maximum delta_p in correntDensity()
 #define MAX_DP 0.1
-const int MAX_PARTICLE_NUM = 120000;
+const int MAX_PARTICLE_NUM = 130000;
 
 typedef unsigned int uint;
 

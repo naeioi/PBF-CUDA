@@ -37,6 +37,11 @@ void Logger::logTime(TType type) {
 	LOG(DENSITY, density)
 	LOG(VELOCITY_UPDATE, vel_upd)
 	LOG(VELOCITY_CORRECT, vel_corr)
+	LOG(DEPTH, depth)
+	LOG(THICK, thick)
+	LOG(SMOOTH, smooth)
+	LOG(NORMAL, normal)
+	LOG(SHADING, shading)
 }
 
 #define RESET(v) v##_sum = 0., v##_max = -1., v##_min = 1e38
@@ -51,18 +56,29 @@ Logger::Logger()
 	RESET(density);
 	RESET(vel_upd);
 	RESET(vel_corr);
+	RESET(depth);
+	RESET(thick);
+	RESET(smooth);
+	RESET(normal);
+	RESET(shading);
 }
 
 #define REPORT(v) printf(#v"\t%.1f/%.1f/%.1f/%.1f\n", v##_sum, 1000*v##_sum/nframe, 1000*v##_min, 1000*v##_max)
 void Logger::report() {
 	printf("-- Timing report --\n");
 	REPORT(simu);
-	REPORT(render);
 	REPORT(advect);
 	REPORT(grid);
 	REPORT(density);
 	REPORT(vel_upd);
 	REPORT(vel_corr);
+
+	REPORT(render);
+	REPORT(depth);
+	REPORT(thick);
+	REPORT(smooth);
+	REPORT(normal);
+	REPORT(shading);
 }
 
 Logger::~Logger()

@@ -10,10 +10,12 @@ public:
 	Simulator(const GUIParams &params, float3 ulim, float3 llim) : m_ulim(ulim), m_llim(llim) {
 
 		loadParams();
+		float3 d = (ulim - llim) / 0.1;
+		int ngrid = 2 * (int)(d.x*d.y*d.z);
 
-		checkCudaErrors(cudaMalloc(&dc_gridId, sizeof(uint) * MAX_PARTICLE_NUM));
-		checkCudaErrors(cudaMalloc(&dc_gridStart, sizeof(uint) * MAX_PARTICLE_NUM));
-		checkCudaErrors(cudaMalloc(&dc_gridEnd, sizeof(uint) * MAX_PARTICLE_NUM));
+		checkCudaErrors(cudaMalloc(&dc_gridId, sizeof(uint) * ngrid));
+		checkCudaErrors(cudaMalloc(&dc_gridStart, sizeof(uint) * ngrid));
+		checkCudaErrors(cudaMalloc(&dc_gridEnd, sizeof(uint) * ngrid));
 		checkCudaErrors(cudaMalloc(&dc_lambda, sizeof(float) * MAX_PARTICLE_NUM));
 		checkCudaErrors(cudaMalloc(&dc_pho, sizeof(float) * MAX_PARTICLE_NUM));
 		checkCudaErrors(cudaMalloc(&dc_tpos, sizeof(float3) * MAX_PARTICLE_NUM));

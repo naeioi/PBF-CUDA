@@ -1,5 +1,6 @@
 #include "helper.h"
 #include "SSFRendererImpl.h"
+#include "Logger.h"
 #include <GLFW\glfw3.h>
 #include <glad\glad.h>
 #include <cuda_runtime.h>
@@ -129,13 +130,20 @@ void SSFRendererImpl::destroy() {
 
 void SSFRendererImpl::render(uint p_vao, int nparticle) {
 
+	auto &logger = Logger::getInstance();
+
 	this->p_vao = p_vao;
 	this->m_nparticle = nparticle;
 	loadParams();
 	m_ab = 0;
 
+	logger.logTime(Logger::DEPTH_START);
 	renderDepth();
+	logger.logTime(Logger::DEPTH_END);
+
+	logger.logTime(Logger::THICK_START);
 	renderThick();
+	logger.logTime(Logger::THICK_END);
 
 	// Algo 1. Compute H and update depth
 	/*for (int i = 0; i < m_niter; i++) {
@@ -144,15 +152,22 @@ void SSFRendererImpl::render(uint p_vao, int nparticle) {
 	updateDepth();
 	}*/
 
+	logger.logTime(Logger::SMOOTH_START);
 	// Algo 2. Smooth filtering
 	for (int i = 0; i < m_niter; i++) {
 		/* Flip pingpong flag BEFORE each step */
 		m_ab = !m_ab;
 		smoothDepth();
 	}
-
+	logger.logTime(Logger::SMOOTH_END);
+	
+	logger.logTime(Logger::NORMAL_START);
 	restoreNormal();
+	logger.logTime(Logger::NORMAL_END);
+
+	logger.logTime(Logger::SHADING_START);
 	shading();
+	logger.logTime(Logger::SHADING_END);
 }
 
 void SSFRendererImpl::renderDepth() {
