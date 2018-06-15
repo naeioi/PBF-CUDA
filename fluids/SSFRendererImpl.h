@@ -72,6 +72,5 @@ struct SSFRendererImpl
 
 	Camera *m_camera;
 	ProjectionInfo m_pi;
-
 };
 

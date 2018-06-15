@@ -53,7 +53,7 @@ vec3 trace_color(vec3 p, vec3 d) {
 	float t = -world_pos.z / world_d.z;
 	vec3 world_its = world_pos.xyz + t * world_d;
 
-	if (abs(world_its.x) < 5 && abs(world_its.y) < 5) {
+	if (t > 0 && abs(world_its.x) < 5 && abs(world_its.y) < 5) {
 		float scale = 10;
 		vec2 uv = scale * (world_its.xy - vec2(-5, -5)) / 10;
 		float u = mod(uv.x, 1), v = mod(uv.y, 1);
@@ -88,6 +88,47 @@ void shading_fresnel() {
 	vec3 reflect_color = trace_color(p, view_reflect);
 
 	FragColor = vec4(mix(refract_color, reflect_color, r), 1);
+}
+
+void shading_refract_tinted() {
+	vec3 n = texture(normalDTex, texCoord).xyz;
+	vec3 p = getPos();
+	vec3 e = normalize(-p);
+	float r = r0 + (1 - r0)*pow(1 - dot(n, e), 3);
+
+	vec3 view_refract = -e - 0.2*n;
+
+	float thickness = texture(thickTex, texCoord).x;
+	float attenuate = max(exp(0.5*-thickness), 0.2);
+	vec3 tint_color = vec3(6, 105, 217) / 256;
+	// vec3 refract_color = mix(tint_color, trace_color(p, view_refract), 0.8);
+	vec3 refract_color = mix(tint_color, trace_color(p, view_refract), attenuate);
+
+	FragColor = vec4(refract_color, 1);
+}
+
+void shading_refract() {
+	vec3 n = texture(normalDTex, texCoord).xyz;
+	vec3 p = getPos();
+	vec3 e = normalize(-p);
+
+	vec3 view_refract = -e - 0.2*n;
+
+	vec3 refract_color = trace_color(p, view_refract);
+
+	FragColor = vec4(refract_color, 1);
+}
+
+void shading_reflect() {
+	vec3 n = texture(normalDTex, texCoord).xyz;
+	vec3 p = getPos();
+	vec3 e = normalize(-p);
+
+	vec3 view_reflect = -e + 2 * n * dot(n, e);
+
+	vec3 reflect_color = trace_color(p, view_reflect);
+
+	FragColor = vec4(reflect_color, 1);
 }
 
 void shading_depth() {
@@ -134,5 +175,11 @@ void main() {
 		shading_normal();
 	else if (shading_option == 4)
 		shading_fresnel_scale();
+	else if (shading_option == 5)
+		shading_reflect();
+	else if (shading_option == 6)
+		shading_refract();
+	else if (shading_option == 7)
+		shading_refract_tinted();
 	else shading_fresnel();
 }

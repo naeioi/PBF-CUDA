@@ -11,7 +11,7 @@ public:
 
 		loadParams();
 		float3 d = (ulim - llim) / 0.1;
-		int ngrid = 2 * (int)(d.x*d.y*d.z);
+		int ngrid = 4 * (int)(d.x*d.y*d.z);
 
 		checkCudaErrors(cudaMalloc(&dc_gridId, sizeof(uint) * ngrid));
 		checkCudaErrors(cudaMalloc(&dc_gridStart, sizeof(uint) * ngrid));

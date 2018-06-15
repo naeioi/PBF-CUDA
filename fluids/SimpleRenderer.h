@@ -85,5 +85,9 @@ private:
 	bool m_draw_fluid;
 	bool m_draw_bbox;
 	bool m_draw_ground;
+
+	/* FFMPEG */
+	int* m_buffer;
+	FILE *m_ffmpeg;
 };
 

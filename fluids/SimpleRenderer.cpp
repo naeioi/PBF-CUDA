@@ -73,6 +73,7 @@ void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) 
 
 	int width_, height_;
 	glfwGetFramebufferSize(m_window, &width_, &height_);
+	m_width = width_; m_height = height_;
 	glViewport(0, 0, width_, height_);
 	glfwSwapInterval(0);
 	glfwSwapBuffers(m_window);
@@ -207,6 +208,15 @@ void SimpleRenderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) 
 
 	/* SSFRenderer */
 	m_SSFrenderer = new SSFRenderer(m_camera, width_, height_, d_sky_texture);
+
+	/* FFMEPG */
+	const char* cmd = "ffmpeg -r 60 -f rawvideo -pix_fmt rgba -s 1280x720 -i - "
+					  "-threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip output.mp4";
+
+	// open pipe to ffmpeg's stdin in binary write mode
+	// m_ffmpeg = _popen(cmd, "wb");
+
+	// m_buffer = new int[width_*height_];
 }
 
 void SimpleRenderer::__window_size_callback(GLFWwindow* window, int width, int height) {
@@ -369,6 +379,10 @@ void SimpleRenderer::__render() {
 		glDrawArrays(GL_LINES, 0, 12 * 2);
 	}
 
+
+	/* Send to ffmpeg */
+	// glReadPixels(0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, m_buffer);
+	// fwrite(m_buffer, sizeof(int)*m_width*m_height, 1, m_ffmpeg);
 }
 
 SimpleRenderer::~SimpleRenderer()
@@ -378,6 +392,7 @@ SimpleRenderer::~SimpleRenderer()
 	if (m_particle_shader) delete m_particle_shader;
 	/* TODO: m_window, input */
 	if (m_input) delete m_input;
+	// _pclose(m_ffmpeg);
 }
 
 void SimpleRenderer::render(uint pos, uint iid, int nparticle) {
