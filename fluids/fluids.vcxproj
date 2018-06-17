@@ -106,7 +106,6 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="Simulator.cu" />
-    <CudaCompile Include="SSFRenderer.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\nanovg\src\fontstash.h" />
@@ -124,12 +123,10 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="Input.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="ParticleSource.h" />
-    <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />
-    <ClInclude Include="SimpleRenderer.h" />
+    <ClInclude Include="Renderer.h" />
     <ClInclude Include="Simulator.h" />
     <ClInclude Include="SSFRenderer.h" />
-    <ClInclude Include="SSFRendererImpl.h" />
     <CudaCompile Include="Simulator_kernel.cuh">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -177,31 +174,17 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ParticleSource.cpp" />
-    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shader.cpp" />
-    <ClCompile Include="shader\simple.cpp" />
-    <ClCompile Include="SimpleRenderer.cpp" />
+    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Simulator.cpp" />
-    <ClCompile Include="SSFRendererImpl.cpp" />
+    <ClCompile Include="SSFRenderer.cpp" />
     <ClCompile Include="StaticVertices.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="vertex.glsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
-      <FileType>Document</FileType>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="fragment.glsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
-      <FileType>Document</FileType>
-    </Text>
   </ItemGroup>
   <ItemGroup>
     <None Include="ground.f.glsl" />
     <None Include="ground.v.glsl" />
+    <None Include="shader\box.f.glsl" />
+    <None Include="shader\box.v.glsl" />
     <None Include="sky.f.glsl" />
     <None Include="sky.v.glsl" />
     <None Include="SSFcomputeH.f.glsl" />

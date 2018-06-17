@@ -41,7 +41,7 @@ FluidSystem::FluidSystem()
 	const glm::vec3 cam_pos(1.f, -5.f, 2.f), cam_focus(0, 0, 1.5f);
 
 	m_simulator = new Simulator(params, m_ulim, m_llim);
-	m_renderer = new SimpleRenderer(cam_pos, cam_focus, m_ulim, m_llim, [this]() { m_nextFrame = true; });
+	m_renderer = new Renderer(cam_pos, cam_focus, m_ulim, m_llim, [this]() { m_nextFrame = true; });
 
 	/* Single cube */
 	//float dd = 1.f / 20;

@@ -1,6 +1,6 @@
 #pragma once
 #include "Simulator.h"
-#include "SimpleRenderer.h"
+#include "Renderer.h"
 #include "ParticleSource.h"
 
 #include <GLFW\glfw3.h>
@@ -26,7 +26,7 @@ private:
 	/* Working components */
 	ParticleSource *m_source;
 	Simulator *m_simulator;
-	SimpleRenderer  *m_renderer;
+	Renderer  *m_renderer;
 
 	/* Parameters */
 	float s_dt;

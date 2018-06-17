@@ -67,7 +67,7 @@ Shader::Shader(const char* vshader, const char* fshader)
 	glDeleteShader(fragment);
 }
 
-Shader::Shader(const Filename & vfile, const Filename & ffile)
+Shader::Shader(const Path & vfile, const Path & ffile)
 {
 	string vcode, fcode;
 

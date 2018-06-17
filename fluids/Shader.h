@@ -15,9 +15,9 @@ extern const char* box_fshader;
 extern const char* particle_vshader;
 extern const char* particle_fshader;
  
-struct Filename {
+struct Path {
 	std::string path;
-	Filename(std::string path) : path(path) {}
+	Path(std::string path) : path(path) {}
 };
 
 class Shader
@@ -26,7 +26,7 @@ public:
 	uint id;
 	Shader();
 	Shader(const char *vshader, const char *fshader);
-	Shader(const Filename &vfile, const Filename &ffile);
+	Shader(const Path &vfile, const Path &ffile);
 	~Shader();
 
 	bool loaded();

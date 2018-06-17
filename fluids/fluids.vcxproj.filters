@@ -3,21 +3,15 @@
   <ItemGroup>
     <CudaCompile Include="Simulator.cu" />
     <CudaCompile Include="Simulator_kernel.cuh" />
-    <CudaCompile Include="SSFRenderer.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FluidSystem.cpp" />
     <ClCompile Include="ParticleSource.cpp" />
-    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Simulator.cpp" />
-    <ClCompile Include="shader\simple.cpp">
-      <Filter>shaders</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Shader.cpp">
       <Filter>shaders</Filter>
     </ClCompile>
-    <ClCompile Include="SimpleRenderer.cpp" />
     <ClCompile Include="FixedCubeSource.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="helper.cpp" />
@@ -113,23 +107,22 @@
     <ClCompile Include="..\common\nanovg\src\nanovg.c">
       <Filter>nanovg</Filter>
     </ClCompile>
-    <ClCompile Include="SSFRendererImpl.cpp" />
     <ClCompile Include="GUIParams.cpp" />
     <ClCompile Include="StaticVertices.cpp" />
     <ClCompile Include="DoubleDamSource.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="SSFRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FluidSystem.h" />
     <ClInclude Include="helper.h" />
     <ClInclude Include="ParticleSource.h" />
-    <ClInclude Include="Renderer.h" />
     <ClInclude Include="Simulator.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Shader.h">
       <Filter>shaders</Filter>
     </ClInclude>
-    <ClInclude Include="SimpleRenderer.h" />
     <ClInclude Include="FixedCubeSource.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="..\common\nanovg\src\fontstash.h">
@@ -150,11 +143,11 @@
     <ClInclude Include="..\common\nanovg\src\stb_truetype.h">
       <Filter>nanovg</Filter>
     </ClInclude>
-    <ClInclude Include="SSFRenderer.h" />
-    <ClInclude Include="SSFRendererImpl.h" />
     <ClInclude Include="GUIParams.h" />
     <ClInclude Include="DoubleDamSource.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="SSFRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="shaders">
@@ -222,13 +215,11 @@
     <None Include="SSFget_thick.f.glsl">
       <Filter>shaders</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="fragment.glsl">
+    <None Include="shader\box.f.glsl">
       <Filter>shaders</Filter>
-    </Text>
-    <Text Include="vertex.glsl">
+    </None>
+    <None Include="shader\box.v.glsl">
       <Filter>shaders</Filter>
-    </Text>
+    </None>
   </ItemGroup>
 </Project>

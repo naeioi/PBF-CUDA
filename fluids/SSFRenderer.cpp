@@ -1,5 +1,5 @@
 #include "helper.h"
-#include "SSFRendererImpl.h"
+#include "SSFRenderer.h"
 #include "Logger.h"
 #include <GLFW\glfw3.h>
 #include <glad\glad.h>
@@ -19,7 +19,7 @@ static float quadVertices[] = { // vertex attributes for a quad that fills the e
     1.0f,  1.0f,  1.0f, 1.0f
 };
 
-SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height, uint sky_texture)
+SSFRenderer::SSFRenderer(Camera *camera, int width, int height, uint sky_texture)
 {
 	loadParams();
 	{
@@ -102,13 +102,13 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height, uint sky
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	/* Load shaders */
-	m_s_get_depth = new Shader(Filename("SSFget_depth.v.glsl"), Filename("SSFget_depth.f.glsl"));
-	m_s_get_thick = new Shader(Filename("SSFget_thick.v.glsl"), Filename("SSFget_thick.f.glsl"));
-	m_s_shading = new Shader(Filename("SSFshading.v.glsl"), Filename("SSFshading.f.glsl"));
-	m_s_restore_normal = new Shader(Filename("SSFrestore_normal.v.glsl"), Filename("SSFrestore_normal.f.glsl"));
-	m_s_computeH = new Shader(Filename("SSFcomputeH.v.glsl"), Filename("SSFcomputeH.f.glsl"));
-	m_s_update_depth = new Shader(Filename("SSFupdate_depth.v.glsl"), Filename("SSFupdate_depth.f.glsl"));
-	m_s_smooth_depth = new Shader(Filename("SSFsmooth_depth.v.glsl"), Filename("SSFsmooth_depth.f.glsl"));
+	m_s_get_depth = new Shader(Path("shader/SSFget_depth.v.glsl"), Path("shader/SSFget_depth.f.glsl"));
+	m_s_get_thick = new Shader(Path("shader/SSFget_thick.v.glsl"), Path("shader/SSFget_thick.f.glsl"));
+	m_s_shading = new Shader(Path("shader/SSFshading.v.glsl"), Path("shader/SSFshading.f.glsl"));
+	m_s_restore_normal = new Shader(Path("shader/SSFrestore_normal.v.glsl"), Path("shader/SSFrestore_normal.f.glsl"));
+	m_s_computeH = new Shader(Path("shader/SSFcomputeH.v.glsl"), Path("shader/SSFcomputeH.f.glsl"));
+	m_s_update_depth = new Shader(Path("shader/SSFupdate_depth.v.glsl"), Path("shader/SSFupdate_depth.f.glsl"));
+	m_s_smooth_depth = new Shader(Path("shader/SSFsmooth_depth.v.glsl"), Path("shader/SSFsmooth_depth.f.glsl"));
 
 	/* Load quad vao */
 	uint quad_vbo;
@@ -123,12 +123,12 @@ SSFRendererImpl::SSFRendererImpl(Camera *camera, int width, int height, uint sky
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 }
 
-void SSFRendererImpl::destroy() {
+void SSFRenderer::destroy() {
 	// if (!dc_depth) return;
 	/* TODO */
 }
 
-void SSFRendererImpl::render(uint p_vao, int nparticle) {
+void SSFRenderer::render(uint p_vao, int nparticle) {
 
 	auto &logger = Logger::getInstance();
 
@@ -170,7 +170,7 @@ void SSFRendererImpl::render(uint p_vao, int nparticle) {
 	logger.logTime(Logger::SHADING_END);
 }
 
-void SSFRendererImpl::renderDepth() {
+void SSFRenderer::renderDepth() {
 	/* After renderDepth(), z_c is store at d_depth 
 	 * Linearize depth (z_e) is stored at d_depth_a  
 	 */
@@ -218,7 +218,7 @@ void SSFRendererImpl::renderDepth() {
 	glEnable(GL_BLEND);
 }
 
-void SSFRendererImpl::renderThick() {
+void SSFRenderer::renderThick() {
 	/* After renderDepth(), z_c is store at d_depth
 	* Linearize depth (z_e) is stored at d_depth_a
 	*/
@@ -262,7 +262,7 @@ void SSFRendererImpl::renderThick() {
 
 }
 
-void SSFRendererImpl::shading() {
+void SSFRenderer::shading() {
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -302,7 +302,7 @@ void SSFRendererImpl::shading() {
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void SSFRendererImpl::loadParams()
+void SSFRenderer::loadParams()
 {
 	const GUIParams &params = GUIParams::getInstance();
 
@@ -312,7 +312,7 @@ void SSFRendererImpl::loadParams()
 	m_blur_z = 1 / params.sigma_z;
 }
 
-//void SSFRendererImpl::mapResources() {
+//void SSFRenderer::mapResources() {
 //	checkCudaErrors(cudaGraphicsMapResources(1, &dcr_depth, 0));
 //	checkCudaErrors(cudaGraphicsMapResources(1, &dcr_normal_D, 0));
 //	checkCudaErrors(cudaGraphicsMapResources(1, &dcr_H, 0));
@@ -323,7 +323,7 @@ void SSFRendererImpl::loadParams()
 //	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)dc_H, &size, dcr_H));
 //}
 //
-//void SSFRendererImpl::unmapResources() {
+//void SSFRenderer::unmapResources() {
 //	checkCudaErrors(cudaGraphicsUnmapResources(1, &dcr_depth, 0));
 //	checkCudaErrors(cudaGraphicsUnmapResources(1, &dcr_normal_D, 0));
 //	checkCudaErrors(cudaGraphicsUnmapResources(1, &dcr_H, 0));
@@ -331,7 +331,7 @@ void SSFRendererImpl::loadParams()
 //	/* TODO: check if need unregister resource using cudaGraphicsUnregisterResource() */
 //}
 
-void SSFRendererImpl::restoreNormal() {
+void SSFRenderer::restoreNormal() {
 
 	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
 	glDisable(GL_BLEND);
@@ -366,7 +366,7 @@ void SSFRendererImpl::restoreNormal() {
 	glEnable(GL_BLEND);
 }
 
-void SSFRendererImpl::computeH() {
+void SSFRenderer::computeH() {
 	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
 	glDisable(GL_BLEND);
 
@@ -400,7 +400,7 @@ void SSFRendererImpl::computeH() {
 	glEnable(GL_BLEND);
 }
 
-void SSFRendererImpl::updateDepth() {
+void SSFRenderer::updateDepth() {
 	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
 	glDisable(GL_BLEND);
 
@@ -431,7 +431,7 @@ void SSFRendererImpl::updateDepth() {
 	glEnable(GL_BLEND);
 }
 
-void SSFRendererImpl::smoothDepth()
+void SSFRenderer::smoothDepth()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
 	glDisable(GL_BLEND);
