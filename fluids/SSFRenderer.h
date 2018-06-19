@@ -36,14 +36,12 @@ struct SSFRenderer
 	uint d_fbo;
 	/* Pingpong flag */
 	bool m_ab; 
-	/* Depth texture of type GL_DEPTH_COMPONENT32F */
+	/* Depth texture for depth test */
 	uint d_depth;
 	/* Pingpong depth texture of type GL_RED32F */
 	uint d_depth_a, d_depth_b;
 	/* normal & D in GL_RGBA32F */
 	uint d_normal_D;
-	/* curvature */
-	uint d_H;
 	/* Thickness */
 	uint d_thick;
 	/* Cuda resources to map/unmap texture */

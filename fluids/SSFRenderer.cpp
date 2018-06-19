@@ -36,12 +36,10 @@ SSFRenderer::SSFRenderer(Camera *camera, int width, int height, uint sky_texture
 	this->m_pi = camera->getProjectionInfo();
 	this->d_sky = sky_texture;
 
-	/* Allocate depth / normal_D / H texture */
 	glGenTextures(1, &d_depth);
 	glGenTextures(1, &d_depth_a);
 	glGenTextures(1, &d_depth_b);
 	glGenTextures(1, &d_normal_D);
-	glGenTextures(1, &d_H);
 	glGenTextures(1, &d_thick);
 
 	glBindTexture(GL_TEXTURE_2D, d_normal_D);
@@ -51,7 +49,7 @@ SSFRenderer::SSFRenderer(Camera *camera, int width, int height, uint sky_texture
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	checkGLErr();
 	glBindTexture(GL_TEXTURE_2D, d_depth);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	checkGLErr();
@@ -65,11 +63,6 @@ SSFRenderer::SSFRenderer(Camera *camera, int width, int height, uint sky_texture
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	checkGLErr();
-	glBindTexture(GL_TEXTURE_2D, d_H);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	checkGLErr();
 	glBindTexture(GL_TEXTURE_2D, d_thick);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -77,23 +70,14 @@ SSFRenderer::SSFRenderer(Camera *camera, int width, int height, uint sky_texture
 	checkGLErr();
 
 	/* TODO: Bind texture to CUDA resource */
-	//checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_normal_D, d_normal_D, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
-	/* CUDA does not support interop with GL_DEPTH_COMPONENT texture ! 
-	 * As a workaround, first render to a depth texture (d_depth)
-	 * then copy depth texture to a color texture (d_depth_a), which contains only red channel 
-	 */
-	//checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_depth, d_depth_a, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
-	//checkCudaErrors(cudaGraphicsGLRegisterImage(&dcr_H, d_H, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsNone));
 
 	/* Allocate framebuffer & Binding depth texture */
 	glGenFramebuffers(1, &d_fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
-	glBindTexture(GL_TEXTURE_2D, d_depth);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, d_depth, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, d_depth_a, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, d_depth_b, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, d_normal_D, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, d_H, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, d_thick, 0);
 
 	checkFramebufferComplete();
@@ -106,8 +90,6 @@ SSFRenderer::SSFRenderer(Camera *camera, int width, int height, uint sky_texture
 	m_s_get_thick = new Shader(Path("shader/SSFget_thick.v.glsl"), Path("shader/SSFget_thick.f.glsl"));
 	m_s_shading = new Shader(Path("shader/SSFshading.v.glsl"), Path("shader/SSFshading.f.glsl"));
 	m_s_restore_normal = new Shader(Path("shader/SSFrestore_normal.v.glsl"), Path("shader/SSFrestore_normal.f.glsl"));
-	m_s_computeH = new Shader(Path("shader/SSFcomputeH.v.glsl"), Path("shader/SSFcomputeH.f.glsl"));
-	m_s_update_depth = new Shader(Path("shader/SSFupdate_depth.v.glsl"), Path("shader/SSFupdate_depth.f.glsl"));
 	m_s_smooth_depth = new Shader(Path("shader/SSFsmooth_depth.v.glsl"), Path("shader/SSFsmooth_depth.f.glsl"));
 
 	/* Load quad vao */
@@ -144,13 +126,6 @@ void SSFRenderer::render(uint p_vao, int nparticle) {
 	logger.logTime(Logger::THICK_START);
 	renderThick();
 	logger.logTime(Logger::THICK_END);
-
-	// Algo 1. Compute H and update depth
-	/*for (int i = 0; i < m_niter; i++) {
-	restoreNormal();
-	computeH();
-	updateDepth();
-	}*/
 
 	logger.logTime(Logger::SMOOTH_START);
 	// Algo 2. Smooth filtering
@@ -312,25 +287,6 @@ void SSFRenderer::loadParams()
 	m_blur_z = 1 / params.sigma_z;
 }
 
-//void SSFRenderer::mapResources() {
-//	checkCudaErrors(cudaGraphicsMapResources(1, &dcr_depth, 0));
-//	checkCudaErrors(cudaGraphicsMapResources(1, &dcr_normal_D, 0));
-//	checkCudaErrors(cudaGraphicsMapResources(1, &dcr_H, 0));
-//
-//	size_t size;
-//	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)dc_depth, &size, dcr_depth));
-//	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)dc_normal_D, &size, dcr_normal_D));
-//	checkCudaErrors(cudaGraphicsResourceGetMappedPointer((void**)dc_H, &size, dcr_H));
-//}
-//
-//void SSFRenderer::unmapResources() {
-//	checkCudaErrors(cudaGraphicsUnmapResources(1, &dcr_depth, 0));
-//	checkCudaErrors(cudaGraphicsUnmapResources(1, &dcr_normal_D, 0));
-//	checkCudaErrors(cudaGraphicsUnmapResources(1, &dcr_H, 0));
-//
-//	/* TODO: check if need unregister resource using cudaGraphicsUnregisterResource() */
-//}
-
 void SSFRenderer::restoreNormal() {
 
 	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
@@ -361,71 +317,6 @@ void SSFRenderer::restoreNormal() {
 	m_s_restore_normal->setUnif("zTex", 0);
 
 	glBindVertexArray(m_quad_vao);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glEnable(GL_BLEND);
-}
-
-void SSFRenderer::computeH() {
-	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
-	glDisable(GL_BLEND);
-
-	m_s_computeH->use();
-	m_camera->use(Shader::now());
-
-	ProjectionInfo i = m_camera->getProjectionInfo();
-	m_s_computeH->setUnif("p_n", i.n);
-	m_s_computeH->setUnif("p_f", i.f);
-	m_s_computeH->setUnif("p_t", i.t);
-	m_s_computeH->setUnif("p_r", i.r);
-	m_s_computeH->setUnif("s_w", (float)m_width);
-	m_s_computeH->setUnif("s_h", (float)m_height);
-
-	glDisable(GL_DEPTH_TEST);
-
-	GLenum bufs[] = { GL_COLOR_ATTACHMENT2 /* d_H */ };
-	glDrawBuffers(1, bufs);
-
-	glBindVertexArray(m_quad_vao);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, d_depth_a);
-	m_s_computeH->setUnif("zTex", 0);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, d_normal_D);
-	m_s_computeH->setUnif("normalDTex", 1);
-	
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glEnable(GL_BLEND);
-}
-
-void SSFRenderer::updateDepth() {
-	glBindFramebuffer(GL_FRAMEBUFFER, d_fbo);
-	glDisable(GL_BLEND);
-
-	m_s_update_depth->use();
-	m_camera->use(Shader::now());
-
-	ProjectionInfo i = m_camera->getProjectionInfo();
-	m_s_update_depth->setUnif("p_n", i.n);
-	m_s_update_depth->setUnif("p_f", i.f);
-	m_s_update_depth->setUnif("s_w", (int)m_width);
-	m_s_update_depth->setUnif("s_h", (int)m_height);
-	m_s_update_depth->setUnif("zImg", 0);
-	m_s_update_depth->setUnif("k", m_k);
-
-	glBindImageTexture(0, d_depth_a, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, d_H);
-
-	m_s_update_depth->setUnif("zImg", 0);
-	m_s_update_depth->setUnif("hTex", 1);
-
-	glDisable(GL_DEPTH_TEST);
-
-	glBindVertexArray(m_quad_vao);
-
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glEnable(GL_BLEND);

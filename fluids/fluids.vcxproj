@@ -187,8 +187,6 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <None Include="shader\box.v.glsl" />
     <None Include="sky.f.glsl" />
     <None Include="sky.v.glsl" />
-    <None Include="SSFcomputeH.f.glsl" />
-    <None Include="SSFcomputeH.v.glsl" />
     <None Include="SSFget_depth.f.glsl" />
     <None Include="SSFget_depth.v.glsl" />
     <None Include="SSFget_thick.f.glsl" />
@@ -199,8 +197,6 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <None Include="SSFrestore_normal.v.glsl" />
     <None Include="SSFsmooth_depth.f.glsl" />
     <None Include="SSFsmooth_depth.v.glsl" />
-    <None Include="SSFupdate_depth.f.glsl" />
-    <None Include="SSFupdate_depth.v.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -173,18 +173,6 @@
     <None Include="SSFrestore_normal.f.glsl">
       <Filter>shaders</Filter>
     </None>
-    <None Include="SSFcomputeH.v.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="SSFcomputeH.f.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="SSFupdate_depth.v.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="SSFupdate_depth.f.glsl">
-      <Filter>shaders</Filter>
-    </None>
     <None Include="SSFshading.f.glsl">
       <Filter>shaders</Filter>
     </None>
