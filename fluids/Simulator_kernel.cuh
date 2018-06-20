@@ -49,24 +49,6 @@ __global__ void computeGridRange(uint* gridIds, uint* gridStart, uint* gridEnd, 
 	}
 }
 
-__host__ __device__
-float h_poly6(float h, float r2) {
-	float h2 = h * h;
-	if (r2 >= h2) return 0;
-	float ih9 = powf(h, -9.f);
-	float coef = 315.f * ih9 / (64.f * M_PI);
-	return coef * (h2 - r2) * (h2 - r2) * (h2 - r2);
-}
-
-__host__ __device__ 
-float3 h_spikyGrad(float h, float3 r) {
-	float rlen = length(r);
-	if (rlen >= h || rlen < KERNAL_EPS) return make_float3(0.f, 0.f, 0.f);
-	float ih6 = powf(h, -6.f);
-	float coef = -45.f * ih6 / M_PI;
-	return (coef * (h - rlen) * (h - rlen)) * normalize(r);
-}
-
 template <typename Func1, typename Func2, typename Func3, typename Poly6F, typename SpikyF>
 __global__
 void computeLambda(

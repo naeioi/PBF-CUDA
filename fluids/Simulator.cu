@@ -81,7 +81,7 @@ struct getPoly6 {
 		float ih9 = ih3 * ih3 * ih3;
 		coef = 315.f * ih9 / (64.f * M_PI);
 	}
-	__device__
+	__device__ __host__
 	float operator()(float r2) {
 		if (r2 >= h2) return 0;
 		float d = h2 - r2;
@@ -141,14 +141,14 @@ struct DensityBoundary {
 	float h;
 	DensityBoundary(float3 &ulim, float3 &llim, float h) : ulim(ulim), llim(llim), h(h) {}
 
-	__device__
+	__device__ 
 	float densityAt(float d) {
 		if (d > h) return 0.f;
 		if (d <= 0.f) return 2 * M_PI / 3;
 		return (2 * M_PI / 3) * (h - d) * (h - d) * (h + d);
 	}
 
-	__device__
+	__device__ 
 	float operator()(float3 p) {
 		return
 			densityAt(ulim.x - p.x) +
@@ -232,7 +232,7 @@ void Simulator::correctDensity()
 	// cudaDeviceSynchronize();
 	// getLastCudaError("Kernel execution failed: computeLambda");
 
-	m_coef_corr = -m_k_corr / powf(h_poly6(m_h, m_delta_q*m_delta_q), m_n_corr);
+	m_coef_corr = -m_k_corr / powf(getPoly6(m_h)(m_delta_q*m_delta_q), m_n_corr);
 
 	computetpos<<<grid_size, block_size>>>(
 		dc_lambda,
