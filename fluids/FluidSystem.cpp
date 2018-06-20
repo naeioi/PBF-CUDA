@@ -27,7 +27,7 @@ FluidSystem::FluidSystem()
 	params.kernel_r = 10.f;
 	params.sigma_r = 6.f;
 	params.sigma_z = 0.1f;
-	params.shading_option = 0;
+	params.shading_option = GUIParams::Full;
 	params.keep_edge = 1;
 	params.blur_option = 0;
 

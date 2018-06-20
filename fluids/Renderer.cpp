@@ -112,7 +112,8 @@ void Renderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) {
 	sigma_z->setMinMaxValues(0.f, 1.f);
 	sigma_z->setSpinnable(true);
 
-	m_gui_form->addVariable("shading_option", params.shading_option)->setSpinnable(true);
+	m_gui_form->addVariable("shading_option", params.shading_option, true)
+		->setItems({ "Full", "Depth", "Thickness", "Normel", "Fresnel", "Reflect", "Refract", "Refract with BL" });
 	m_gui_form->addVariable("keep_edge", params.keep_edge)->setSpinnable(true);
 	m_gui_form->addVariable("blur_option", params.blur_option)->setSpinnable(true);
 
@@ -139,11 +140,11 @@ void Renderer::init(const glm::vec3 &cam_pos, const glm::vec3 &cam_focus) {
 		}
 	});
 
-	auto logTime = m_gui_form->addButton("Log Time", []() {});
+	/*auto logTime = m_gui_form->addButton("Log Time", []() {});
 	logTime->setFlags(nanogui::Button::ToggleButton);
 	logTime->setChangeCallback([this](bool state) { Logger::getInstance().toggleLogTime(state); });
 
-	m_gui_form->addButton("Report Time", []() { Logger::getInstance().report();  });
+	m_gui_form->addButton("Report Time", []() { Logger::getInstance().report();  });*/
 
 	m_gui_screen->setVisible(true);
 	m_gui_screen->performLayout();

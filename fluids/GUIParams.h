@@ -21,9 +21,21 @@ public:
 	float sigma_r;
 	float sigma_z;
 	int smooth_niter;
-	int shading_option;
 	int keep_edge;
 	int blur_option;
+
+	enum ShadeOption {
+		Full = 0,
+		Depth,
+		Thick,
+		Normal,
+		Fresnel,
+		Reflect,
+		Refract,
+		RefractBL
+	};
+
+	ShadeOption shading_option;
 	
 	static GUIParams& getInstance();
 
